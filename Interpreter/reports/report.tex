@@ -1,0 +1,201 @@
+\documentclass[12pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{geometry}
+\usepackage{amsmath}
+
+\geometry{margin=1in}
+
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{backcolour},   
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\footnotesize,
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    numbers=left,                    
+    numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2,
+    language=C++
+}
+
+\lstset{style={mystyle}}
+
+\title{Design Pattern Report: Interpreter Pattern}
+\author{Group 52 \\ Nguyễn Đình Minh Huy (Student ID: 25125083)}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+\newpage
+
+\section{Real-world Problem}
+In many systems, there is a need to evaluate language expressions or logical constraints defined dynamically at runtime. For example, database query parsers, business rule engines, or search filters.
+Consider a logic engine that needs to evaluate Boolean expressions containing variables (e.g., $A$, $B$, $C$) and logical operations (\texttt{AND}, \texttt{OR}, \texttt{NOT}). 
+The engine must accept various combinations of expressions dynamically, lookup the values of variables in a configuration context, and return the final truth value.
+
+\section{Naive Solution (Without Design Pattern)}
+In a naive C++ implementation, expressions are represented as raw strings. The evaluation is performed by string searching and direct logical checks.
+
+\begin{lstlisting}[caption=Naive Boolean Expression Evaluator]
+// Refer to Interpreter/src/naive.cpp for full implementation details
+class NaiveLogicEvaluator {
+public:
+    static bool evaluate(const std::string& expression, const NaiveContext& context) {
+        if (expression.find(" AND ") != std::string::npos) {
+            size_t pos = expression.find(" AND ");
+            std::string left = expression.substr(0, pos);
+            std::string right = expression.substr(pos + 5);
+            return context.lookup(left) && context.lookup(right);
+        }
+        // Similar blocks for OR and NOT
+        ...
+    }
+};
+\end{lstlisting}
+
+\section{Problems with the Naive Solution}
+The naive string-parsing solution has significant limitations:
+\begin{enumerate}
+    \item \textbf{Inflexibility / Hard to Extend:} Adding new operators (like \texttt{XOR}, \texttt{NAND}, \texttt{IMPLIES}) requires changing the parsing logic inside the monolithic evaluation method.
+    \item \textbf{Complexity of Nested Expressions:} Evaluating complex nested expressions such as \texttt{(A AND B) OR (NOT C AND D)} using string search becomes extremely complex, error-prone, and slow. It requires writing a full custom parsing state machine.
+    \item \textbf{High Coupling:} The syntax structure and evaluation logic are bundled together, violating the Single Responsibility Principle (SRP).
+\end{enumerate}
+
+\section{Introduction to the Interpreter Pattern}
+The \textbf{Interpreter Pattern} is a behavioral design pattern that defines a grammatical representation for a language along with an interpreter to evaluate sentences in the language.
+It represents grammar rules as classes. These classes can be structured hierarchically to form an Abstract Syntax Tree (AST).
+
+Key elements:
+\begin{itemize}
+    \item \textbf{Context:} Contains information global to the interpreter (e.g., variable mappings).
+    \item \textbf{AbstractExpression:} Declares an abstract \texttt{interpret(Context)} operation.
+    \item \textbf{TerminalExpression:} Implements an \texttt{interpret} operation associated with terminal symbols in the grammar (e.g., variables, constants).
+    \item \textbf{NonterminalExpression:} Implements an \texttt{interpret} operation for nonterminal symbols (e.g., operators like \texttt{AndExpression}, \texttt{OrExpression}).
+\end{itemize}
+
+\section{General Class Diagram}
+In the general Interpreter pattern:
+\begin{itemize}
+    \item \texttt{Client} builds the AST out of Terminal and Nonterminal expressions.
+    \item The root of the tree is evaluated by calling \texttt{interpret()} with a given \texttt{Context}.
+\end{itemize}
+
+\begin{figure}[h]
+    \centering
+    \color{gray}\framebox[0.8\textwidth]{\parbox{0.75\textwidth}{\centering\vskip10pt[Insert General Interpreter UML Diagram Here]\vskip10pt}}
+    \caption{General Interpreter Design Pattern UML Diagram}
+    \label{fig:general_uml}
+\end{figure}
+
+\section{Class Diagram for the Logic Evaluator}
+For our Boolean expression evaluator:
+\begin{itemize}
+    \item \texttt{Expression} is the abstract base.
+    \item \texttt{VariableExpression} and \texttt{ConstantExpression} are terminal expressions.
+    \item \texttt{AndExpression}, \texttt{OrExpression}, \texttt{NotExpression}, and \texttt{XorExpression} are nonterminal expressions.
+\end{itemize}
+
+\begin{figure}[h]
+    \centering
+    \color{gray}\framebox[0.8\textwidth]{\parbox{0.75\textwidth}{\centering\vskip10pt[Insert Logic Interpreter UML Diagram Here]\vskip10pt}}
+    \caption{UML Class Diagram for Boolean Logic Interpreter}
+    \label{fig:logic_uml}
+\end{figure}
+
+\section{Implementation of the Interpreter Pattern}
+By modeling rules as classes, expressions are composed as trees.
+
+\begin{lstlisting}[caption=Interpreter Pattern Implementation]
+// Refer to Interpreter/src/pattern.cpp for full implementation details
+class Expression {
+public:
+    virtual ~Expression() = default;
+    virtual bool interpret(const Context& context) = 0;
+};
+
+class VariableExpression : public Expression {
+    std::string name;
+public:
+    VariableExpression(std::string name) : name(name) {}
+    bool interpret(const Context& c) override { return c.lookup(name); }
+};
+
+class AndExpression : public Expression {
+    std::shared_ptr<Expression> left, right;
+public:
+    bool interpret(const Context& c) override {
+        return left->interpret(c) && right->interpret(c);
+    }
+};
+\end{lstlisting}
+
+\section{Pros and Cons}
+\subsection{Pros}
+\begin{itemize}
+    \item \textbf{Easy to Change/Extend Grammar:} Since rules are represented by classes, you can use inheritance to change or extend the grammar easily (e.g., adding \texttt{XorExpression}).
+    \item \textbf{Simple Implementation:} Classes defining nodes in the AST are straightforward to write.
+\end{itemize}
+\subsection{Cons}
+\begin{itemize}
+    \item \textbf{Complex Grammars are Hard to Maintain:} As the grammar rules increase, the class hierarchy becomes large and difficult to manage. For complex grammars, compiler generators (like ANTLR, Lex/Yacc) are preferred.
+    \item \textbf{Efficiency:} Building and traversing ASTs can be slower and memory-intensive compared to state-machine-based parsers.
+\end{itemize}
+
+\section{Other Real-world Applications}
+\subsection{Web Development}
+\begin{itemize}
+    \item \textbf{URL Routing Parsers:} Routers in frameworks (e.g., Express.js, Django) parse URL paths matching dynamic patterns like \texttt{/user/:id/profile}.
+    \item \textbf{CSS Selector Engines:} Browsers interpret selector strings like \texttt{div.container > ul li} to apply styles.
+\end{itemize}
+\subsection{Mobile Development}
+\begin{itemize}
+    \item \textbf{Localization/Pluralization Parsers:} Processing format strings containing plural conditions (e.g., "1 item" vs. "many items").
+    \item \textbf{Formula Evaluators:} Spreadsheet apps or calculator features on mobile apps.
+\end{itemize}
+
+\section{Quiz}
+\begin{enumerate}
+    \item In the Interpreter pattern, what does the Abstract Syntax Tree (AST) represent?
+    \begin{itemize}
+        \item[A)] The database schema.
+        \item[B)] A sentence or expression structured according to the grammar.
+        \item[C)] The sequence of UI views.
+        \item[D)] A memory leak detector.
+    \end{itemize}
+    
+    \item Which of the following is a Terminal expression?
+    \begin{itemize}
+        \item[A)] AndExpression
+        \item[B)] VariableExpression
+        \item[C)] OrExpression
+        \item[D)] NotExpression
+    \end{itemize}
+\end{enumerate}
+
+\textbf{Answer Key:} 1-B, 2-B.
+
+\section{References}
+\begin{itemize}
+    \item Gamma, E., Helm, R., Johnson, R., \& Vlissides, J. (1994). \textit{Design Patterns}. Addison-Wesley.
+    \item Refactoring.Guru. \textit{Design Patterns: Interpreter}. https://refactoring.guru/design-patterns/interpreter
+\end{itemize}
+
+\end{document}

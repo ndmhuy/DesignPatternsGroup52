@@ -1,0 +1,207 @@
+\documentclass[12pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{geometry}
+\usepackage{amsmath}
+
+\geometry{margin=1in}
+
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{backcolour},   
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\footnotesize,
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    numbers=left,                    
+    numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2,
+    language=C++
+}
+
+\lstset{style={mystyle}}
+
+\title{Design Pattern Report: Mediator Pattern}
+\author{Group 52 \\ Nguyễn Đình Minh Huy (Student ID: 25125083)}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+\newpage
+
+\section{Real-world Problem}
+In complex systems with many interacting components, direct communication between components leads to tight coupling.
+Consider an airport air traffic control coordination system. There are multiple flights (commercial flights, private jets, cargo planes) flying near an airport. Flights need to request authorization to land on or take off from runways.
+If flights communicate directly with each other to determine if the runway is clear:
+\begin{itemize}
+    \item Every flight must keep references to all other flights.
+    \item Flights must poll other flights about their landing status.
+    \item Adding a new flight requires updating references in all other active flights.
+\end{itemize}
+This direct peer-to-peer communication creates an $O(N^2)$ dependency web, leading to a system that is brittle, complex, and unsafe.
+
+\section{Naive Solution (Without Design Pattern)}
+In a naive implementation, flights store pointers to all other flight instances directly.
+
+\begin{lstlisting}[caption=Naive Flight Coordination]
+// Refer to Mediator/src/naive.cpp for full implementation details
+class NaiveFlight {
+private:
+    std::string flightNumber;
+    std::vector<NaiveFlight*> otherFlights; // Coupling nightmare
+    bool isLanding = false;
+
+public:
+    void requestLanding() {
+        bool canLand = true;
+        for (auto flight : otherFlights) {
+            if (flight->getIsLanding()) {
+                canLand = false; // Conflict found
+            }
+        }
+        if (canLand) { isLanding = true; }
+    }
+};
+\end{lstlisting}
+
+\section{Problems with the Naive Solution}
+The naive flight coordination model has major drawbacks:
+\begin{enumerate}
+    \item \textbf{Tight Coupling / $O(N^2)$ Dependency:} Every flight holds pointers to all other flights. This results in heavy structural coupling.
+    \item \textbf{Complex Group Modification:} When a flight leaves the airspace or a new flight enters, all other flights must update their collection lists.
+    \item \textbf{Decentralized Control Logic:} Safety coordination logic is scattered across individual flight instances, increasing the risk of race conditions or bugs.
+\end{enumerate}
+
+\section{Introduction to the Mediator Pattern}
+The \textbf{Mediator Pattern} is a behavioral design pattern that defines an object that encapsulates how a set of objects interact. It promotes loose coupling by keeping objects from referring to each other explicitly, allowing their interaction to be varied independently.
+
+Key concepts:
+\begin{itemize}
+    \item \textbf{Mediator:} Defines an interface for communicating with Colleague objects.
+    \item \textbf{ConcreteMediator:} Implements cooperative behavior by coordinating Colleague objects.
+    \item \textbf{Colleague classes:} Each Colleague object knows its Mediator object; it communicates with its mediator whenever it would have otherwise communicated with another colleague.
+\end{itemize}
+
+\section{General Class Diagram}
+In the general Mediator pattern:
+\begin{itemize}
+    \item Colleagues maintain a reference to the Mediator interface.
+    \item The ConcreteMediator coordinates communication and keeps references to all concrete Colleagues.
+\end{itemize}
+
+\begin{figure}[h]
+    \centering
+    \color{gray}\framebox[0.8\textwidth]{\parbox{0.75\textwidth}{\centering\vskip10pt[Insert General Mediator UML Diagram Here]\vskip10pt}}
+    \caption{General Mediator Design Pattern UML Diagram}
+    \label{fig:general_uml}
+\end{figure}
+
+\section{Class Diagram for the ATC Tower Problem}
+For our airport coordination:
+\begin{itemize}
+    \item \texttt{IATCMediator} is the Mediator interface.
+    \item \texttt{ATCTower} is the ConcreteMediator.
+    \item \texttt{Flight} is the Colleague base class.
+\end{itemize}
+
+\begin{figure}[h]
+    \centering
+    \color{gray}\framebox[0.8\textwidth]{\parbox{0.75\textwidth}{\centering\vskip10pt[Insert ATC Mediator UML Diagram Here]\vskip10pt}}
+    \caption{UML Class Diagram for ATC Mediator System}
+    \label{fig:atc_uml}
+\end{figure}
+
+\section{Implementation of the Mediator Pattern}
+Using the Mediator pattern, flights register with a central Air Traffic Control tower and communicate solely with the tower.
+
+\begin{lstlisting}[caption=Mediator Pattern Implementation]
+// Refer to Mediator/src/pattern.cpp for full implementation details
+class IATCMediator {
+public:
+    virtual void registerFlight(Flight* flight) = 0;
+    virtual bool requestLanding(Flight* flight) = 0;
+};
+
+class Flight {
+protected:
+    IATCMediator* mediator;
+    std::string flightNumber;
+public:
+    void requestLanding() {
+        if (mediator->requestLanding(this)) {
+            // land
+        }
+    }
+};
+\end{lstlisting}
+
+\section{Pros and Cons}
+\subsection{Pros}
+\begin{itemize}
+    \item \textbf{Reduced Coupling:} Replaces many-to-many interactions with one-to-many interactions between a mediator and colleagues.
+    \item \textbf{Centralized Control Logic:} Interaction behavior is localized in a single place (the Mediator class), making it easier to maintain and update coordination rules.
+    \item \textbf{Simpler Colleagues:} Individual colleagues are decoupled and do not need to manage references to peers.
+\end{itemize}
+\subsection{Cons}
+\begin{itemize}
+    \item \textbf{God Object Risk:} The Mediator can easily become overly complex and bloated as it handles more coordination logic, making it a maintenance bottleneck.
+    \item \textbf{Single Point of Failure:} If the mediator crashes, the entire interaction flow stops.
+\end{itemize}
+
+\section{Other Real-world Applications}
+\subsection{Web Development}
+\begin{itemize}
+    \item \textbf{MediatR in ASP.NET:} A popular library that implements the mediator pattern to decouple in-process message sending from message handling (CQRS architectures).
+    \item \textbf{Front Controller Pattern:} Serves as a single entry point for all web requests, routing them to appropriate handlers.
+\end{itemize}
+\subsection{Mobile Development}
+\begin{itemize}
+    \item \textbf{Coordinator Pattern in iOS:} Deconstructs view controller navigation, using coordinator classes to direct flow instead of view controllers instantiating each other.
+    \item \textbf{Dialogs/Forms Controllers:} Decoupling UI form fields (inputs, buttons, checkboxes) so they change their state via a form coordinator.
+\end{itemize}
+
+\section{Quiz}
+\begin{enumerate}
+    \item What is the primary purpose of the Mediator pattern?
+    \begin{itemize}
+        \item[A)] To dynamically add operations to objects.
+        \item[B)] To encapsulate how a set of objects interact, reducing direct coupling.
+        \item[C)] To translate text formats.
+        \item[D)] To make sure objects share the same memory address.
+    \end{itemize}
+    
+    \item What is the main risk of using a Mediator?
+    \begin{itemize}
+        \item[A)] Infinite recursion.
+        \item[B)] Hard-coded templates.
+        \item[C)] The mediator class becoming a bloated "God Object".
+        \item[D)] Observers forgetting to register.
+    \end{itemize}
+\end{enumerate}
+
+\textbf{Answer Key:} 1-B, 2-C.
+
+\section{References}
+\begin{itemize}
+    \item Gamma, E., Helm, R., Johnson, R., \& Vlissides, J. (1994). \textit{Design Patterns}. Addison-Wesley.
+    \item Refactoring.Guru. \textit{Design Patterns: Mediator}. https://refactoring.guru/design-patterns/mediator
+\end{itemize}
+
+\end{document}

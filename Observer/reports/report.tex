@@ -1,0 +1,241 @@
+\documentclass[12pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{geometry}
+\usepackage{amsmath}
+
+\geometry{margin=1in}
+
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{backcolour},   
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\footnotesize,
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    numbers=left,                    
+    numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2,
+    language=C++
+}
+
+\lstset{style={mystyle}}
+
+\title{Design Pattern Report: Observer Pattern}
+\author{Group 52 \\ Nguyễn Đình Minh Huy (Student ID: 25125083)}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+\newpage
+
+\section{Real-world Problem}
+Consider a modern video streaming application like YouTube. In this application, creators upload videos to channels, and subscribers wish to receive updates whenever a new video is published. 
+The system needs to accommodate various types of notifications:
+\begin{itemize}
+    \item Email notifications sent to desktop users.
+    \item Push notifications delivered to mobile applications.
+    \item Broadcast updates displayed on Smart TVs.
+\end{itemize}
+
+A user must be able to subscribe to or unsubscribe from a channel at any time. The core challenge is establishing a system where a YouTube channel can broadcast updates to an arbitrary and dynamic set of subscribers without knowing their concrete classes or notification mechanisms.
+
+\section{Naive Solution (Without Design Pattern)}
+In a naive implementation, the \texttt{YouTubeChannel} class holds lists of concrete subscriber objects directly. Below is the C++ representation of this approach:
+
+\begin{lstlisting}[caption=Naive Implementation of YouTube Channel]
+// Refer to Observer/src/naive.cpp for full implementation details
+class NaiveYouTubeChannel {
+private:
+    std::string name;
+    std::vector<EmailSubscriber*> emailSubscribers;
+    std::vector<MobileSubscriber*> mobileSubscribers;
+
+public:
+    void subscribeEmail(EmailSubscriber* sub) {
+        emailSubscribers.push_back(sub);
+    }
+    void subscribeMobile(MobileSubscriber* sub) {
+        mobileSubscribers.push_back(sub);
+    }
+    
+    void uploadVideo(const std::string& videoTitle) {
+        // Direct method invocation on concrete objects
+        for (auto sub : emailSubscribers) {
+            sub->receiveEmailNotification(name, videoTitle);
+        }
+        for (auto sub : mobileSubscribers) {
+            sub->receivePushNotification(name, videoTitle);
+        }
+    }
+};
+\end{lstlisting}
+
+\section{Problems with the Naive Solution}
+The naive approach exhibits several major architectural flaws:
+\begin{enumerate}
+    \item \textbf{Tight Coupling:} The \texttt{NaiveYouTubeChannel} is tightly coupled to concrete classes like \texttt{EmailSubscriber} and \texttt{MobileSubscriber}. It must know their names and exactly which method to invoke (e.g., \texttt{receiveEmailNotification} vs. \texttt{receivePushNotification}).
+    \item \textbf{Violation of the Open-Closed Principle (OCP):} If we want to introduce a new type of subscriber (such as \texttt{TVSubscriber} or \texttt{SMSSubscriber}), we must modify the \texttt{NaiveYouTubeChannel} class. This requires adding a new list, a new subscribe method, and altering the notification loop inside \texttt{uploadVideo}.
+    \item \textbf{Rigidity:} Code becomes difficult to maintain as the number of subscriber types grows, leading to bloated classes and repeated logic.
+\end{enumerate}
+
+\section{Introduction to the Observer Pattern}
+The \textbf{Observer Pattern} is a behavioral design pattern that defines a one-to-many dependency between objects. When one object (the \textbf{Subject} or \textbf{Publisher}) changes state, all its dependents (the \textbf{Observers} or \textbf{Subscribers}) are notified and updated automatically.
+
+Key concepts:
+\begin{itemize}
+    \item \textbf{Subject:} Knows its observers and provides an interface to attach or detach them.
+    \item \textbf{Observer:} Defines an updating interface for objects that should be notified.
+    \item \textbf{ConcreteSubject:} Stores state of interest to ConcreteObservers and sends notifications.
+    \item \textbf{ConcreteObserver:} Implements the Observer updating interface to keep its state consistent with the subject.
+\end{itemize}
+
+\section{General Class Diagram}
+% Add instructions to place the UML diagram image here
+In the general Observer pattern structure:
+\begin{itemize}
+    \item A \texttt{Subject} maintains a list of references to \texttt{Observer} objects.
+    \item The \texttt{Subject} exposes interfaces: \texttt{attach(Observer)}, \texttt{detach(Observer)}, and \texttt{notify()}.
+    \item \texttt{Observer} exposes the \texttt{update()} method interface.
+\end{itemize}
+
+\begin{figure}[h]
+    \centering
+    \color{gray}\framebox[0.8\textwidth]{\parbox{0.75\textwidth}{\centering\vskip10pt[Insert General Observer UML Diagram Here]\vskip10pt}}
+    \caption{General Observer Design Pattern UML Diagram}
+    \label{fig:general_uml}
+\end{figure}
+
+\section{Class Diagram for the YouTube Problem}
+Applying the pattern to our problem:
+\begin{itemize}
+    \item \texttt{YouTubeChannelInterface} acts as the Subject interface.
+    \item \texttt{YouTubeChannel} acts as the ConcreteSubject.
+    \item \texttt{Subscriber} acts as the Observer interface.
+    \item \texttt{EmailSubscriberPattern}, \texttt{MobileSubscriberPattern}, and \texttt{TVSubscriberPattern} act as the ConcreteObservers.
+\end{itemize}
+
+\begin{figure}[h]
+    \centering
+    \color{gray}\framebox[0.8\textwidth]{\parbox{0.75\textwidth}{\centering\vskip10pt[Insert YouTube Observer UML Diagram Here]\vskip10pt}}
+    \caption{UML Class Diagram for YouTube Subscription System}
+    \label{fig:youtube_uml}
+\end{figure}
+
+\section{Implementation of the Observer Pattern}
+By decoupling the classes through abstract interfaces, our refactored implementation allows adding new subscriber types at runtime without modifying the subject.
+
+\begin{lstlisting}[caption=Refactored Observer Implementation]
+// Refer to Observer/src/pattern.cpp for full implementation details
+class Subscriber {
+public:
+    virtual ~Subscriber() = default;
+    virtual void update(const std::string& channelName, const std::string& videoTitle) = 0;
+};
+
+class YouTubeChannel : public YouTubeChannelInterface {
+private:
+    std::string name;
+    std::vector<Subscriber*> subscribers;
+
+public:
+    void subscribe(Subscriber* s) override { subscribers.push_back(s); }
+    void unsubscribe(Subscriber* s) override { /* Remove from list */ }
+    void notify(const std::string& videoTitle) override {
+        for (auto s : subscribers) {
+            s->update(name, videoTitle);
+        }
+    }
+};
+\end{lstlisting}
+
+\section{Pros and Cons}
+\subsection{Pros}
+\begin{itemize}
+    \item \textbf{Loose Coupling:} The Subject and Observers are loosely coupled. The Subject only knows that the observer implements a specific interface.
+    \item \textbf{Support for Broadcast Communication:} Unlike direct calls, notifications are broadcast automatically to all registered subscribers.
+    \item \textbf{Open-Closed Principle:} We can introduce new concrete observer classes without changing the subject's code.
+\end{itemize}
+
+\subsection{Cons}
+\begin{itemize}
+    \item \textbf{Lapsed Listener Problem:} Observers must be carefully deregistered when destroyed, or they remain in memory and get called, causing undefined behavior or leaks.
+    \item \textbf{Unintended Update Chains:} If observers trigger updates on subjects, it can lead to complex and hard-to-debug cascading updates or infinite loops.
+    \item \textbf{Ordering Concerns:} There is no guarantee in which order the observers will be notified.
+\end{itemize}
+
+\section{Other Real-world Applications}
+\subsection{Web Development}
+\begin{itemize}
+    \item \textbf{Event Handling in JavaScript:} The DOM's \texttt{addEventListener} uses the Observer pattern to attach event handlers to HTML elements.
+    \item \textbf{State Management (Redux/Vuex):} Views subscribe to changes in a global store and re-render automatically when state mutations occur.
+\end{itemize}
+\subsection{Mobile Development}
+\begin{itemize}
+    \item \textbf{RxSwift / RxJava / RxKotlin:} Reactive streams rely heavily on observing data sequences and binding them directly to UI components.
+    \item \textbf{SwiftUI/Android Jetpack Compose:} Declarative UI frameworks use property wrappers like \texttt{@Published} and state flows to push model updates directly to the view.
+\end{itemize}
+
+\section{Quiz}
+Here are some interactive questions to review the Observer pattern:
+
+\begin{enumerate}
+    \item What type of design pattern is the Observer Pattern?
+    \begin{itemize}
+        \item[A)] Creational
+        \item[B)] Structural
+        \item[C)] Behavioral
+        \item[D)] Architectural
+    \end{itemize}
+    
+    \item Which SOLID principle does the Observer pattern primarily help satisfy when adding new subscribers?
+    \begin{itemize}
+        \item[A)] Liskov Substitution Principle
+        \item[B)] Single Responsibility Principle
+        \item[C)] Interface Segregation Principle
+        \item[D)] Open-Closed Principle
+    \end{itemize}
+
+    \item What is the ``Lapsed Listener'' problem in the Observer pattern?
+    \begin{itemize}
+        \item[A)] The subject stops listening to updates.
+        \item[B)] Observers are not notified because the subject crashed.
+        \item[C)] An observer is deleted without unsubscribing, causing memory leaks/crashes.
+        \item[D)] Multiple subjects occupy the same listener list.
+    \end{itemize}
+
+    \item Which of the following is a key advantage of the Observer pattern?
+    \begin{itemize}
+        \item[A)] It ensures observers are updated sequentially.
+        \item[B)] It decouples the subject from concrete observer details.
+        \item[C)] It reduces memory overhead of notifications.
+        \item[D)] It prevents subjects from changing their state.
+    \end{itemize}
+\end{enumerate}
+
+\textbf{Answer Key:} 1-C, 2-D, 3-C, 4-B.
+
+\section{References}
+\begin{itemize}
+    \item Gamma, E., Helm, R., Johnson, R., \& Vlissides, J. (1994). \textit{Design Patterns: Elements of Reusable Object-Oriented Software}. Addison-Wesley.
+    \item Refactoring.Guru. \textit{Design Patterns: Observer}. https://refactoring.guru/design-patterns/observer
+\end{itemize}
+
+\end{document}
