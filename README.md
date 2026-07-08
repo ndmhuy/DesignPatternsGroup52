@@ -14,7 +14,11 @@ Our group is working on the following design patterns:
 * **Full Name:** Nguyễn Đình Minh Huy
 * **Student ID:** 25125083
 * **Class:** 25A01
-* *(Note: Add details of other group members here)*
+
+
+* **Full Name:** Trần Gia Huy
+* **Student ID:** 25125084
+* **Class:** 25A01
 
 ---
 
