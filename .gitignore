@@ -1,0 +1,20 @@
+# LaTeX auxiliary files
+*.aux
+*.log
+*.out
+*.toc
+*.synctex.gz
+*.fls
+*.fdb_latexmk
+
+# C++ Build & compiled outputs
+*.o
+*.obj
+observer_demo
+interpreter_demo
+mediator_demo
+a.out
+
+# OS files
+.DS_Store
+Thumbs.db
