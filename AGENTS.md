@@ -82,6 +82,36 @@ pdflatex -output-directory=Observer/reports Observer/reports/report.tex
 
 ---
 
+## 👥 Member Recognition & Private Knowledge System
+
+To support seamless collaboration between Member A and Member B, agents must dynamically identify which developer is currently working and adapt to their specific custom preferences/orders using a dual system:
+
+### 1. Dynamic Member Recognition
+At the start of every session, the agent should run checks to identify the active developer:
+- **Git User Check**: Retrieve the local git user configuration (`git config user.name`).
+- **Profile Check**: Check if `.member_profile.json` exists at the workspace root.
+
+### 2. Private Knowledge & Custom User Orders
+Since all git-tracked files are shared, custom personal notes, reminders, or private user orders for the agent should be kept in a local, gitignored configuration file called `.member_profile.json` at the project root.
+
+Each developer can create their own `.member_profile.json` locally. The agent must search for and read this file (if present) to load custom, member-specific orders.
+
+#### Example `.member_profile.json` Schema:
+```json
+{
+  "memberName": "A",
+  "developerName": "Nguy\~{\^e}n \DJ\`inh Minh Huy",
+  "privateNotes": "Any specific reminders or notes from the user that should not be shared via Git.",
+  "agentCustomInstructions": [
+    "Ensure LaTeX report compiles with pdflatex cleanly.",
+    "Propose code changes that are standard-compliant."
+  ]
+}
+```
+If `.member_profile.json` is missing, the agent must gracefully fall back to git configuration detection or invite the developer to create this file.
+
+---
+
 ## 🤖 Guidelines for AI Actions
 
 * **Always preserve context:** Do not overwrite existing code or markdown files fully; use targeted replacement blocks.
