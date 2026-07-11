@@ -88,6 +88,9 @@ To support seamless collaboration between Member A and Member B, agents must dyn
 
 ### 1. Dynamic Member Recognition
 At the start of every session, the agent should run checks to identify the active developer:
+- **Git Branch Check**: Retrieve the active git branch name (e.g., running `git branch --show-current`).
+  - Branches starting with `A/` or `A-` indicate **Member A (Trần Gia Huy)** is working.
+  - Branches starting with `B/` or `B-` indicate **Member B (Nguyễn Đình Minh Huy)** is working.
 - **Git User Check**: Retrieve the local git user configuration (`git config user.name`).
 - **Profile Check**: Check if `.member_profile.json` exists at the workspace root.
 
@@ -99,7 +102,7 @@ Each developer can create their own `.member_profile.json` locally. The agent mu
 #### Example `.member_profile.json` Schema:
 ```json
 {
-  "memberName": "A",
+  "memberName": "B",
   "developerName": "Nguy\~{\^e}n \DJ\`inh Minh Huy",
   "privateNotes": "Any specific reminders or notes from the user that should not be shared via Git.",
   "agentCustomInstructions": [
@@ -108,7 +111,7 @@ Each developer can create their own `.member_profile.json` locally. The agent mu
   ]
 }
 ```
-If `.member_profile.json` is missing, the agent must gracefully fall back to git configuration detection or invite the developer to create this file.
+If `.member_profile.json` is missing, the agent must gracefully fall back to git configuration or branch detection or invite the developer to create this file.
 
 ---
 
