@@ -98,10 +98,26 @@ public:
   }
 };
 
+void pressEnterToContinue() {
+  std::cout << "[Press Enter to continue...]\n";
+  std::cin.get();
+}
+
 void runPatternDemo() {
   std::cout << "\n=== RUNNING PATTERN DEMO (With Observer Pattern) ===\n";
+  
+  std::cout << "Step 1: Initializing BankAccount with $1000.00...\n";
   BankAccount account(1000.0);
+  pressEnterToContinue();
 
+  std::cout << "Step 2: Attaching observers...\n";
+  std::cout << " - UIObserver (updates screen balance display)\n";
+  std::cout << " - EmailObserver (sends transaction notification emails)\n";
+  std::cout << " - LoggerObserver (writes to security/audit logs)\n";
+  std::cout << " - FraudAIObserver (scans transaction amounts, warns if > $10,000)\n";
+  std::cout << " - MobileAppObserver (sends push notification)\n";
+  std::cout << " - AnalyticsObserver (records activity metrics)\n";
+  
   auto ui = std::make_shared<UIObserver>();
   auto email = std::make_shared<EmailObserver>();
   auto logger = std::make_shared<LoggerObserver>();
@@ -115,14 +131,24 @@ void runPatternDemo() {
   account.attach(fraud);
   account.attach(mobile);
   account.attach(analytics);
+  pressEnterToContinue();
 
-  // First deposit: notifies all observers
+  std::cout << "Step 3: Depositing $250.00. Expecting notifications to ALL 6 systems...\n\n";
   account.deposit(250.0);
+  std::cout << "\n";
+  pressEnterToContinue();
 
-  std::cout << "\n--- Dynamically detaching Email and Mobile App ---\n";
+  std::cout << "Step 4: Dynamically detaching Email and Mobile App observers...\n";
+  std::cout << " (Customer disabled Email alerts and Mobile pushes in settings)\n";
   account.detach(email);
   account.detach(mobile);
+  pressEnterToContinue();
 
-  // Second deposit: notifies remaining observers
+  std::cout << "Step 5: Depositing $12000.00. Expecting notifications to remaining systems...\n";
+  std::cout << " (No Email, No Mobile push. Fraud AI alert should trigger for large amount)\n\n";
   account.deposit(12000.0);
+  std::cout << "\n";
+  pressEnterToContinue();
+
+  std::cout << "=== PATTERN DEMO COMPLETED ===\n";
 }
