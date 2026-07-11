@@ -30,7 +30,18 @@ public:
   }
   void deposit(double amount) {
     balance_ += amount;
+    std::cout << "[BankAccount] Deposited $" << amount << ". New balance: $" << balance_ << "\n";
     notify("Deposit", amount);
+  }
+  void withdraw(double amount) {
+    if (amount > balance_) {
+      std::cout << "[BankAccount] Rejected: Insufficient funds for withdrawal of $" << amount << "\n";
+      notify("FailedWithdrawal", amount);
+    } else {
+      balance_ -= amount;
+      std::cout << "[BankAccount] Withdrew $" << amount << ". New balance: $" << balance_ << "\n";
+      notify("Withdrawal", amount);
+    }
   }
 
   double getBalance() const { return balance_; }
@@ -53,8 +64,14 @@ class EmailObserver : public AccountObserver {
 public:
   void onTransaction(const std::string &type, double amount,
                      double currentBalance) override {
-    (void)type; (void)currentBalance;
-    std::cout << "[Email Observer] Alert sent: A deposit of $" << amount << " was made.\n";
+    (void)currentBalance;
+    if (type == "Deposit") {
+      std::cout << "[Email Observer] Alert sent: A deposit of $" << amount << " was made.\n";
+    } else if (type == "Withdrawal") {
+      std::cout << "[Email Observer] Alert sent: A withdrawal of $" << amount << " was made.\n";
+    } else if (type == "FailedWithdrawal") {
+      std::cout << "[Email Observer] Security Alert: A withdrawal of $" << amount << " failed due to insufficient funds.\n";
+    }
   }
 };
 
@@ -71,11 +88,11 @@ class FraudAIObserver : public AccountObserver {
 public:
   void onTransaction(const std::string &type, double amount,
                      double currentBalance) override {
-    (void)type; (void)currentBalance;
+    (void)currentBalance;
     if (amount > 10000.0) {
-      std::cout << "[Fraud AI] WARNING: Suspicious large deposit detected: $" << amount << "\n";
+      std::cout << "[Fraud AI] WARNING: Suspicious large activity detected: " << type << " of $" << amount << "\n";
     } else {
-      std::cout << "[Fraud AI] Scan complete: Deposit of $" << amount << " is marked OK.\n";
+      std::cout << "[Fraud AI] Scan complete: " << type << " of $" << amount << " is marked OK.\n";
     }
   }
 };
@@ -84,8 +101,14 @@ class MobileAppObserver : public AccountObserver {
 public:
   void onTransaction(const std::string &type, double amount,
                      double currentBalance) override {
-    (void)type; (void)currentBalance;
-    std::cout << "[Mobile App] Push: Account credited with $" << amount << "\n";
+    (void)currentBalance;
+    if (type == "Deposit") {
+      std::cout << "[Mobile App] Push: Account credited with $" << amount << "\n";
+    } else if (type == "Withdrawal") {
+      std::cout << "[Mobile App] Push: Account debited with $" << amount << "\n";
+    } else if (type == "FailedWithdrawal") {
+      std::cout << "[Mobile App] Alert: Withdrawal of $" << amount << " failed (Insufficient Funds).\n";
+    }
   }
 };
 
@@ -147,6 +170,22 @@ void runPatternDemo() {
   std::cout << "Step 5: Depositing $12000.00. Expecting notifications to remaining systems...\n";
   std::cout << " (No Email, No Mobile push. Fraud AI alert should trigger for large amount)\n\n";
   account.deposit(12000.0);
+  std::cout << "\n";
+  pressEnterToContinue();
+
+  std::cout << "Step 6: Customer re-enables Mobile App notifications in settings...\n";
+  std::cout << " (Attaching MobileAppObserver back to BankAccount)\n";
+  account.attach(mobile);
+  pressEnterToContinue();
+
+  std::cout << "Step 7: Withdrawing $500.00. Expecting notifications to UI, Logger, Fraud AI, Analytics, AND Mobile App (Email remains disabled)...\n\n";
+  account.withdraw(500.0);
+  std::cout << "\n";
+  pressEnterToContinue();
+
+  std::cout << "Step 8: Attempting to withdraw $15000.00 (which exceeds current balance of $12750.00)...\n";
+  std::cout << " (Expecting Insufficient Funds failure alerts to UI, Logger, Fraud AI, Analytics, and Mobile App)\n\n";
+  account.withdraw(15000.0);
   std::cout << "\n";
   pressEnterToContinue();
 
