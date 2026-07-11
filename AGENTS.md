@@ -124,3 +124,18 @@ If `.member_profile.json` is missing, the agent must gracefully fall back to git
 * **Recompile PDFs on changes:** Every time a LaTeX file (e.g., `.tex` source for reports or scripts) is modified, the corresponding PDF must be recompiled to keep it in sync with the source content.
 * **Commit and push changes:** Always stage, commit, and push all modifications to the remote repository (`git push`) before concluding any task.
 * **Proactive rule updates:** If you identify repetitive manual requirements or workflow improvements, automatically propose updating the rules in this `AGENTS.md` file.
+* **Automatic Task & Prompt Logging:** Automatically append a summary of each user prompt and the corresponding results to the local log file: [agent_history.log](file:///Users/huynguyen/Documents/CS202-Cpp/DesignPatternsGroup52/logs/agent_history.log) in the specified format before concluding a task.
+
+---
+
+## 📝 Automatic Log Entry Format
+
+Every time you finish a task, append to `logs/agent_history.log` at the project root in this format:
+
+```text
+[YYYY-MM-DD HH:MM:SS] Branch: <branch_name>
+Prompt: <brief prompt summary>
+Files Modified: <list of files>
+Summary of Changes: <brief bulleted list>
+---
+```
