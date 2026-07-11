@@ -18,39 +18,39 @@ This script is designed for a **10 to 15-minute presentation** in the seminar, c
 
 ---
 
-### Slide 2: Real-world Problem (YouTube Subscription)
+### Slide 2: Real-world Problem (Bank Account notifications)
 * **Speaker B:** 
-  > "Imagine you are building a video streaming platform like YouTube. Creators upload videos to their channels, and users subscribe to these channels. When a new video goes live, subscribers need to be notified immediately. 
+  > "Imagine you are building a modern financial core banking system. We have a `BankAccount` class where customers perform transactions, like depositing money. When a deposit occurs, several peripheral systems need to react immediately.
   >
-  > However, the challenge is that subscribers use different channels of notifications—some want an email alert, others want a mobile push notification, and some want updates on their Smart TV. Moreover, users subscribe and unsubscribe dynamically at runtime. How do we build this without tangling our codebase?"
+  > For instance, the User Interface needs to update the balance display. The Email system needs to send a confirmation message. A security log needs to record the transaction. An AI Fraud Detector needs to scan for suspicious activity. The mobile app needs to send a push notification, and the analytics system needs to register a deposit event. How can we notify all these systems dynamically at runtime without tangling our core business logic?"
 
 ---
 
 ### Slide 3: Naive Solution (Without Pattern)
 * **Speaker A:** 
-  > "In a naive solution, we might create concrete classes for each subscriber type, such as `EmailSubscriber` and `MobileSubscriber`. Our `NaiveYouTubeChannel` class then maintains separate lists for each of these concrete classes. 
+  > "In a naive solution, we might create concrete classes for each system: `UI`, `EmailSystem`, `Logger`, `FraudDetector`, `MobileApp`, and `Analytics`. Our `NaiveBankAccount` class then maintains references to all these concrete classes.
   >
-  > As you can see in this code snippet, when a video is uploaded, the channel iterates through the lists of email subscribers and mobile subscribers individually, calling their specific methods like `receiveEmailNotification` or `receivePushNotification`. While this works for simple scenarios, it is highly problematic."
+  > As shown in this code snippet, inside the `deposit()` method, the bank account explicitly calls methods on all six objects: updating the UI, sending email alerts, logging details, running fraud checks, pushing notifications, and recording metrics. This works, but it's a maintenance nightmare."
 
 ---
 
 ### Slide 4: Drawbacks of the Naive Solution
 * **Speaker B:** 
-  > "This naive approach has three major flaws:
+  > "Indeed, this naive approach has three severe flaws:
   > 
-  > First, **Tight Coupling**. The channel must know the exact concrete types of subscribers and their specific update methods. 
+  > First, **Tight Coupling**. The `BankAccount` is tightly coupled to six concrete classes. It has to know their names, structures, and specific update methods.
   > 
-  > Second, it violates the **Open-Closed Principle (OCP)**. If we want to add a third subscriber type—say, `TVSubscriber`—we must modify the channel class, add a new vector list, and modify the notification loop inside `uploadVideo`. 
+  > Second, it violates the **Open-Closed Principle (OCP)**. If compliance requirements demand a new Credit Score or Marketing promotion check system, we must modify the core `BankAccount` class.
   > 
-  > Lastly, it is **rigid and hard to scale** as the number of subscriber channels grows."
+  > Lastly, it is **rigid and hard to scale**. We cannot easily unsubscribe or disable notifications dynamically at runtime."
 
 ---
 
 ### Slide 5: Introduction to the Observer Pattern
 * **Speaker A:** 
-  > "To solve this, we use the **Observer Pattern**. The intent of the pattern is to define a one-to-many dependency between objects. When the Subject—in our case, the YouTube Channel—changes state, all its dependents—our Subscribers—are notified and updated automatically. 
+  > "To solve this coupling issue, we use the **Observer Pattern**. The pattern defines a one-to-many dependency between objects. When the Subject—our `BankAccount`—changes its state via a deposit, all its dependents—our systems/Observers—are notified and updated automatically.
   > 
-  > The key is that the Subject only interacts with an abstract interface, not concrete classes. This cleanly separates the publisher from its subscribers."
+  > The key is that the `BankAccount` only interacts with an abstract interface, not the concrete classes. This separates the core transaction logic from the notification channels."
 
 ---
 
@@ -58,41 +58,41 @@ This script is designed for a **10 to 15-minute presentation** in the seminar, c
 * **Speaker B:** 
   > "Here is the general UML diagram of the pattern. We have:
   > 1. The **Subject** interface, which defines methods to attach, detach, and notify observers.
-  > 2. The **Observer** interface, which defines a simple `update()` method.
+  > 2. The **Observer** interface, which defines a simple `update()` or `onTransaction()` method.
   > 3. The **ConcreteSubject**, which maintains the list of Observers and broadcasts notifications.
   > 4. **ConcreteObservers**, which implement the `update()` method to perform their custom action."
 
 ---
 
-### Slide 7: Specific Class Diagram (YouTube Example)
+### Slide 7: Specific Class Diagram (Bank Account Example)
 * **Speaker A:** 
-  > "Applying this to our YouTube problem, we introduce the abstract `Subscriber` interface as our Observer, which declares a single `update(channelName, videoTitle)` method. 
+  > "Applying this to our problem, we introduce the abstract `AccountObserver` interface, which declares a single `onTransaction(type, amount, balance)` method.
   > 
-  > Our `YouTubeChannel` class implements the Subject interface, maintaining a single list of `Subscriber*` pointers. Now, `YouTubeChannel` has no idea whether it's notifying an email subscriber, a mobile app, or a smart TV. It simply calls `update()` on all registered pointers."
+  > Our `BankAccount` class implements the Subject role. It maintains a list of `AccountObserver` pointers. The bank account doesn't know or care if it's notifying the UI, the Logger, the Fraud AI, or an Analytics tracker. It simply loops through the pointers and invokes `onTransaction()`."
 
 ---
 
 ### Slide 8: Code Implementation & Demo
 * **Speaker B:** 
-  > "Let's look at the refactored code. The `YouTubeChannel` class is now clean. To subscribe, we simply push the `Subscriber*` to the vector; to unsubscribe, we erase it. 
+  > "Let's look at the refactored code. The `BankAccount` class is now extremely clean. To add a notification channel, we call `attach()`; to remove it, we call `detach()`.
   > 
-  > Adding a new `TVSubscriber` class requires zero changes to the channel class itself! In our console demo, you can see that when a video is uploaded, all three subscribers receive the updates. When we unsubscribe the mobile app subscriber, the subsequent upload only triggers updates for the email and TV subscribers."
+  > Adding a new compliance observer requires absolutely zero changes to the bank account code itself! In our console demo, you can see that when a deposit is made, all six observers are successfully notified. When we dynamically detach the Email and Mobile App observers, the subsequent deposit only triggers logs, UI, fraud detection, and analytics updates."
 
 ---
 
 ### Slide 9: Pros & Cons
 * **Speaker A:** 
-  > "Like all patterns, the Observer pattern has trade-offs. 
+  > "Like any design choice, the Observer pattern has trade-offs.
   > 
-  > The main **Pros** are that it satisfies the Open-Closed Principle and allows dynamic runtime subscriptions. 
+  > The main **Pros** are that it satisfies the Open-Closed Principle, separates concerns cleanly, and allows dynamic runtime changes.
   > 
-  > The **Cons** include the **Lapsed Listener Problem**—if observers are destroyed without unsubscribing, the subject will hold dead pointers, causing memory leaks or crashes. Additionally, developers must be careful about cascading update loops if observers trigger changes back in the subject."
+  > The **Cons** include the **Lapsed Listener Problem**—if observers are destroyed without detaching, the subject will hold dangling references, leading to memory leaks or crashes. Additionally, developers must be careful about ordering concerns and avoiding infinite loops if observers trigger state updates back on the subject."
 
 ---
 
 ### Slide 10: Other Real-world Applications
 * **Speaker B:** 
-  > "In modern software development, you see this pattern everywhere. 
+  > "In modern software development, you see this pattern everywhere.
   > 
   > In web dev, browser DOM events like `addEventListener` are classic Observers. Similarly, state management libraries like Redux or Vuex notify UI components to re-render when the state store updates.
   > 
@@ -115,3 +115,4 @@ This script is designed for a **10 to 15-minute presentation** in the seminar, c
 ### Slide 12: Conclusion & References
 * **Speaker A:** 
   > "In conclusion, the Observer pattern is a powerful tool to build scalable, loosely-coupled event-driven systems. Thank you all for listening. We are now open to any questions or reviews from the audience."
+

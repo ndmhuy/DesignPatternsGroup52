@@ -21,8 +21,8 @@ To ensure high-quality output and shared learning, **both members will cowork on
 
 | Task | Member A | Member B | Collaborative Milestones |
 | :--- | :--- | :--- | :--- |
-| **C++ Implementation** | Implement Naive YouTube Channel (`naive.cpp`) & analyze its coupling. | Implement decoupled `Subscriber` and `YouTubeChannel` (`pattern.cpp`). | Integrate and verify execution in `main.cpp` using local tests. |
-| **UML Diagrams** | Design specific class diagram for the YouTube problem. | Design general class diagram for the Observer pattern. | Verify UML syntax and class relationships. |
+| **C++ Implementation** | Implement Naive Bank Account (`naive.cpp`) & analyze its coupling. | Implement decoupled `AccountObserver` and `BankAccount` (`pattern.cpp`). | Integrate and verify execution in `main.cpp` using local tests. |
+| **UML Diagrams** | Design specific class diagram for the Bank Account problem. | Design general class diagram for the Observer pattern. | Verify UML syntax and class relationships. |
 | **LaTeX Report** | Draft sections 1–4 (Problem, Naive Solution, Naive Drawbacks, Pattern Intro). | Draft sections 7–9 (Implementation, Pros/Cons, Web/Mobile Applications). | Review formatting, compile `report.tex`, and add citations. |
 | **PPTX Presentation** | Structure outline, draft slides 1–5 (Problem, Naive code, Drawbacks, Pattern Intro). | Format code blocks, draft slides 6–10 (UML, Refactored code, Pros/Cons, Web/Mobile). | Perform slide design cleanup (glassmorphism/dark theme) and run a rehearsal. |
 | **Interactive Quiz** | Write questions 1–4 (ABCD options + answers). | Write questions 5–8 (ABCD options + answers). | Review quiz key and prepare small participation rewards. |

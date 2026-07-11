@@ -88,3 +88,6 @@ pdflatex -output-directory=Observer/reports Observer/reports/report.tex
 * **Keep code compilable:** Before concluding a task, run a compilation check to ensure there are no syntax errors.
 * **Keep LaTeX syntax valid:** Ensure all LaTeX blocks are closed properly, particularly `\begin{...}` and `\end{...}`.
 * **No placeholders:** Write real implementations instead of standard boilerplate comments where possible.
+* **Recompile PDFs on changes:** Every time a LaTeX file (e.g., `.tex` source for reports or scripts) is modified, the corresponding PDF must be recompiled to keep it in sync with the source content.
+* **Commit and push changes:** Always stage, commit, and push all modifications to the remote repository (`git push`) before concluding any task.
+* **Proactive rule updates:** If you identify repetitive manual requirements or workflow improvements, automatically propose updating the rules in this `AGENTS.md` file.

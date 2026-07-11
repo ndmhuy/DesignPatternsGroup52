@@ -13,43 +13,43 @@ Following the course guidelines, here is the structured slide outline for our pr
 * **Presenter:** Nguyễn Đình Minh Huy (Student ID: 25125083) & Group Members
 
 ### Slide 2: Real-world Problem
-* **Scenario:** A YouTube Subscription System.
-* **Goal:** A YouTuber uploads a video, and multiple subscribers (who use different devices/platforms like email notifications, push notifications, smart TV updates) need to be notified instantly.
-* **Core Requirement:** Subscribers can subscribe and unsubscribe dynamically.
+* **Scenario:** A Bank Account Transaction System.
+* **Goal:** A user performs a deposit on a `BankAccount`, and multiple peripheral systems (UI display, Email alerts, Security loggers, Fraud AI, Mobile push notifications, and Analytics) need to be notified instantly.
+* **Core Requirement:** Observers can subscribe and unsubscribe dynamically at runtime.
 
 ### Slide 3: Naive Solution (Without Pattern)
 * **Code Concept:**
-  - `NaiveYouTubeChannel` directly maintains lists of `EmailSubscriber*` and `MobileSubscriber*`.
-  - When uploading a video, it iterates through each list and calls their specific notification methods (`receiveEmailNotification`, `receivePushNotification`).
-* **Visual/Code Snippet:** Show a code screenshot of the `NaiveYouTubeChannel` class.
+  - `NaiveBankAccount` directly maintains instances/lists of `UI`, `EmailSystem`, `Logger`, `FraudDetector`, `MobileApp`, and `Analytics`.
+  - Inside `deposit()`, it explicitly calls each sub-system's update method (e.g., `ui.update()`, `email.sendEmail()`, `logger.log()`, etc.).
+* **Visual/Code Snippet:** Show a code screenshot of the `NaiveBankAccount` class.
 
 ### Slide 4: Drawbacks of the Naive Solution
-* **Tight Coupling:** The channel must know all subscriber classes and their unique notification methods.
-* **Open-Closed Principle (OCP) Violation:** If a new subscriber type (e.g., `TVSubscriber`) is added, we must modify the `NaiveYouTubeChannel` code, add a new list, and modify the `uploadVideo` method.
-* **Rigidity:** Subscribers cannot easily customize how or when they are notified.
+* **Tight Coupling:** The bank account class must know all peripheral system classes and their unique update methods.
+* **Open-Closed Principle (OCP) Violation:** If a new system (e.g., a credit score system) is added, we must modify the `BankAccount` class, add a new member variable, and update `deposit()`.
+* **Rigidity:** Sub-systems cannot easily be enabled or disabled dynamically.
 
 ### Slide 5: Introduction to the Observer Pattern
 * **Definition:** A behavioral design pattern that defines a one-to-many dependency between objects so that when one object changes state, all its dependents are notified and updated automatically.
 * **Intent:** Decouple the Subject (publisher) from the Observers (subscribers).
 * **Key Components:**
-  - **Subject (Publisher):** Maintains a list of observers, provides interface for attaching/detaching observers.
-  - **Observer (Subscriber):** Defines an updating interface for objects that should be notified of changes in a subject.
+  - **Subject (Publisher):** Maintains a list of observers, provides interface for attaching/detaching observers (e.g., `BankAccount`).
+  - **Observer (Subscriber):** Defines an updating interface for objects that should be notified of changes in a subject (e.g., `AccountObserver`).
 
 ### Slide 6: General Class Diagram
 * **Visual:** Standard Observer UML Diagram containing:
   - `Subject` (Interface) and `ConcreteSubject`
   - `Observer` (Interface) and `ConcreteObserver`
-  - Relationship: `Subject` contains a collection of `Observer` instances; `ConcreteObserver` points to `ConcreteSubject` (optional).
+  - Relationship: `Subject` contains a collection of `Observer` instances.
 
-### Slide 7: Specific Class Diagram (YouTube Example)
+### Slide 7: Specific Class Diagram (Bank Account Example)
 * **Visual:** UML diagram tailored to our example:
-  - `YouTubeChannelInterface` (Subject) -> `YouTubeChannel` (Concrete Subject)
-  - `Subscriber` (Observer Interface) -> `EmailSubscriberPattern`, `MobileSubscriberPattern`, `TVSubscriberPattern` (Concrete Observers)
+  - `BankAccount` (Subject)
+  - `AccountObserver` (Observer Interface) -> `UIObserver`, `EmailObserver`, `LoggerObserver`, `FraudAIObserver`, `MobileAppObserver`, `AnalyticsObserver` (Concrete Observers)
   - Show the dynamic link between them.
 
 ### Slide 8: Code Implementation & Demo
-* **Highlight:** Show the refactored code where `YouTubeChannel` only knows `Subscriber` interface.
-* **Demo Output:** Display the console output of `observer_demo` demonstrating subscribing, unsubscribing, and adding the TV subscriber without changing the core channel code.
+* **Highlight:** Show the refactored code where `BankAccount` only knows `AccountObserver` interface.
+* **Demo Output:** Display the console output of `observer_demo` demonstrating attaching observers, executing a deposit, detaching some observers (Email/Mobile App), and showing subsequent deposit output.
 
 ### Slide 9: Pros & Cons of the Observer Pattern
 * **Pros:**
