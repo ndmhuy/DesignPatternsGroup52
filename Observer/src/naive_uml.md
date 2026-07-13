@@ -12,7 +12,7 @@ classDiagram
         - FraudDetectionService* fraudService
         - MobileAppService* mobileService
         - AnalyticsService* analyticsService
-        + BankAccount(string accNum, UIUpdateService* ui, EmailService* email, LoggerService* logger, FraudDetectionService* fraud, MobileAppService* mobile, AnalyticsService* analytics)
+        + BankAccount(string accNum, < services >)
         + ~BankAccount()
         + void deposit(double amount)
         + double getBalance() const
@@ -43,10 +43,10 @@ classDiagram
         + void trackEvent(string eventType, double amount)
     }
 
-    BankAccount --> UIUpdateService : association
-    BankAccount --> EmailService : association
-    BankAccount --> LoggerService : association
-    BankAccount --> FraudDetectionService : association
-    BankAccount --> MobileAppService : association
-    BankAccount --> AnalyticsService : association
+    BankAccount o-- UIUpdateService : aggregation
+    BankAccount o-- EmailService : aggregation
+    BankAccount o-- LoggerService : aggregation
+    BankAccount o-- FraudDetectionService : aggregation
+    BankAccount o-- MobileAppService : aggregation
+    BankAccount o-- AnalyticsService : aggregation
 ```
