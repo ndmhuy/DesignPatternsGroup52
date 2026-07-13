@@ -101,7 +101,7 @@ public:
     std::string getAccountNumber() const { return accountNumber; }
 };
 
-void naive_test() {
+void naiveTest() {
     // Create service variables on the stack
     UIUpdateService ui;
     EmailService email;
@@ -116,6 +116,7 @@ void naive_test() {
     // Call deposit to demonstrate coupling execution
     std::cout << "--- Naive Deposit Test ---" << std::endl;
     account.deposit(500.0);
+    std::cout << std::endl;
     account.deposit(200.0);
 }
 
