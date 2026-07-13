@@ -47,43 +47,61 @@
 \newpage
 
 \section{Real-world Problem}
-Consider a modern video streaming application like YouTube. In this application, creators upload videos to channels, and subscribers wish to receive updates whenever a new video is published. 
-The system needs to accommodate various types of notifications:
+Consider a modern banking application where users perform transaction operations such as deposits on their bank accounts. Whenever a transaction occurs (e.g., a deposit is made), the system needs to notify various downstream services to process this event:
 \begin{itemize}
-    \item Email notifications sent to desktop users.
-    \item Push notifications delivered to mobile applications.
-    \item Broadcast updates displayed on Smart TVs.
+    \item Update the user interface (UI) to reflect the new balance.
+    \item Send an email notification/receipt to the user.
+    \item Log the transaction details for auditing and record-keeping.
+    \item Run real-time fraud detection analytics to ensure transaction safety.
+    \item Send a mobile push notification to the user's phone.
+    \item Forward data to analytics systems for user behavior reporting.
 \end{itemize}
 
-A user must be able to subscribe to or unsubscribe from a channel at any time. The core challenge is establishing a system where a YouTube channel can broadcast updates to an arbitrary and dynamic set of subscribers without knowing their concrete classes or notification mechanisms.
+The core challenge is establishing a system where a bank account can broadcast transaction updates to a dynamic set of interested services/observers without tightly coupling the core banking logic to concrete service classes or notification mechanisms.
 
 \section{Naive Solution (Without Design Pattern)}
-In a naive implementation, the \texttt{YouTubeChannel} class holds lists of concrete subscriber objects directly. Below is the C++ representation of this approach:
+In a naive implementation, the \texttt{NaiveBankAccount} class directly references and invokes methods on concrete service classes whenever a deposit is made. Below is the C++ representation of this approach:
 
-\begin{lstlisting}[caption=Naive Implementation of YouTube Channel]
-// Refer to Observer/src/naive.cpp for full implementation details
-class NaiveYouTubeChannel {
+\begin{lstlisting}[caption=Naive Implementation of Bank Account]
+// Naive implementation demonstrating tight coupling
+class NaiveBankAccount {
 private:
-    std::string name;
-    std::vector<EmailSubscriber*> emailSubscribers;
-    std::vector<MobileSubscriber*> mobileSubscribers;
+    double balance;
+    std::string accountNumber;
+    
+    // Direct dependencies on concrete notification/processing services
+    UIUpdateService* uiService;
+    EmailService* emailService;
+    LoggerService* loggerService;
+    FraudDetectionService* fraudService;
+    MobileAppService* mobileService;
+    AnalyticsService* analyticsService;
 
 public:
-    void subscribeEmail(EmailSubscriber* sub) {
-        emailSubscribers.push_back(sub);
+    NaiveBankAccount(std::string accNum) 
+        : balance(0.0), accountNumber(accNum),
+          uiService(new UIUpdateService()),
+          emailService(new EmailService()),
+          loggerService(new LoggerService()),
+          fraudService(new FraudDetectionService()),
+          mobileService(new MobileAppService()),
+          analyticsService(new AnalyticsService()) {}
+
+    ~NaiveBankAccount() {
+        delete uiService; delete emailService; delete loggerService;
+        delete fraudService; delete mobileService; delete analyticsService;
     }
-    void subscribeMobile(MobileSubscriber* sub) {
-        mobileSubscribers.push_back(sub);
-    }
-    
-    void uploadVideo(const std::string& videoTitle) {
+
+    void deposit(double amount) {
+        balance += amount;
+        
         // Direct method invocation on concrete objects
-        for (auto sub : emailSubscribers) {
-            sub->receiveEmailNotification(name, videoTitle);
-        }
-        for (auto sub : mobileSubscribers) {
-            sub->receivePushNotification(name, videoTitle);
-        }
+        uiService->updateUI(amount, balance);
+        emailService->sendEmail(accountNumber, amount);
+        loggerService->logTransaction(accountNumber, amount);
+        fraudService->detectFraud(accountNumber, amount);
+        mobileService->pushNotification(amount);
+        analyticsService->trackEvent("deposit", amount);
     }
 };
 \end{lstlisting}
@@ -91,9 +109,10 @@ public:
 \section{Problems with the Naive Solution}
 The naive approach exhibits several major architectural flaws:
 \begin{enumerate}
-    \item \textbf{Tight Coupling:} The \texttt{NaiveYouTubeChannel} is tightly coupled to concrete classes like \texttt{EmailSubscriber} and \texttt{MobileSubscriber}. It must know their names and exactly which method to invoke (e.g., \texttt{receiveEmailNotification} vs. \texttt{receivePushNotification}).
-    \item \textbf{Violation of the Open-Closed Principle (OCP):} If we want to introduce a new type of subscriber (such as \texttt{TVSubscriber} or \texttt{SMSSubscriber}), we must modify the \texttt{NaiveYouTubeChannel} class. This requires adding a new list, a new subscribe method, and altering the notification loop inside \texttt{uploadVideo}.
-    \item \textbf{Rigidity:} Code becomes difficult to maintain as the number of subscriber types grows, leading to bloated classes and repeated logic.
+    \item \textbf{Tight Coupling:} The \texttt{NaiveBankAccount} is tightly coupled to concrete classes like \texttt{UIUpdateService}, \texttt{EmailService}, etc. It must hold references to each concrete service and know exactly which methods to invoke on them.
+    \item \textbf{Violation of the Open-Closed Principle (OCP):} If we want to introduce a new downstream service (such as a regulatory auditing service or a tax calculator), we must modify the \texttt{NaiveBankAccount} class. This requires adding a new pointer, allocating it in the constructor, deleting it in the destructor, and invoking it inside \texttt{deposit}.
+    \item \textbf{Violation of the Single Responsibility Principle (SRP):} The bank account class should focus solely on managing balance and basic transaction logic. Instead, it is tasked with orchestrating notification emails, logging, UI rendering, and fraud checks.
+    \item \textbf{Rigidity:} Since the dependencies are hardcoded, they cannot be configured or swapped at runtime, making unit testing difficult (cannot mock dependencies).
 \end{enumerate}
 
 \section{Introduction to the Observer Pattern}
@@ -123,44 +142,78 @@ In the general Observer pattern structure:
     \label{fig:general_uml}
 \end{figure}
 
-\section{Class Diagram for the YouTube Problem}
+\section{Class Diagram for the Bank Account Problem}
 Applying the pattern to our problem:
 \begin{itemize}
-    \item \texttt{YouTubeChannelInterface} acts as the Subject interface.
-    \item \texttt{YouTubeChannel} acts as the ConcreteSubject.
-    \item \texttt{Subscriber} acts as the Observer interface.
-    \item \texttt{EmailSubscriberPattern}, \texttt{MobileSubscriberPattern}, and \texttt{TVSubscriberPattern} act as the ConcreteObservers.
+    \item \texttt{BankAccount} acts as the Subject.
+    \item \texttt{TransactionObserver} acts as the Observer interface.
+    \item \texttt{UIObserver}, \texttt{EmailObserver}, \texttt{LoggerObserver}, \texttt{FraudAIObserver}, and \texttt{AnalyticsObserver} act as the ConcreteObservers.
 \end{itemize}
 
 \begin{figure}[h]
     \centering
-    \color{gray}\framebox[0.8\textwidth]{\parbox{0.75\textwidth}{\centering\vskip10pt[Insert YouTube Observer UML Diagram Here]\vskip10pt}}
-    \caption{UML Class Diagram for YouTube Subscription System}
-    \label{fig:youtube_uml}
+    \color{gray}\framebox[0.8\textwidth]{\parbox{0.75\textwidth}{\centering\vskip10pt[Insert BankAccount Observer UML Diagram Here]\vskip10pt}}
+    \caption{UML Class Diagram for Bank Account Notification System}
+    \label{fig:bank_uml}
 \end{figure}
 
 \section{Implementation of the Observer Pattern}
-By decoupling the classes through abstract interfaces, our refactored implementation allows adding new subscriber types at runtime without modifying the subject.
+By decoupling the classes through abstract interfaces, our refactored implementation allows adding new service observers at runtime without modifying the subject class. We also utilize modern C++ smart pointers (\texttt{std::shared\_ptr}) to safely manage object lifetimes.
 
 \begin{lstlisting}[caption=Refactored Observer Implementation]
-// Refer to Observer/src/pattern.cpp for full implementation details
-class Subscriber {
+// Observer interface
+class TransactionObserver {
 public:
-    virtual ~Subscriber() = default;
-    virtual void update(const std::string& channelName, const std::string& videoTitle) = 0;
+    virtual ~TransactionObserver() = default;
+    virtual void update(double amount, double balance) = 0;
 };
 
-class YouTubeChannel : public YouTubeChannelInterface {
+// Concrete Observers
+class UIObserver : public TransactionObserver {
+public:
+    void update(double amount, double balance) override {
+        std::cout << "[UI] Updated. Transaction: " << amount 
+                  << ", New Balance: " << balance << "\n";
+    }
+};
+
+class EmailObserver : public TransactionObserver {
+public:
+    void update(double amount, double balance) override {
+        std::cout << "[Email] Sent receipt. Amount: " << amount 
+                  << ", Current Balance: " << balance << "\n";
+    }
+};
+
+// Subject / Publisher
+class BankAccount {
 private:
-    std::string name;
-    std::vector<Subscriber*> subscribers;
+    double balance = 0.0;
+    std::string accountNumber;
+    std::vector<std::shared_ptr<TransactionObserver>> observers;
 
 public:
-    void subscribe(Subscriber* s) override { subscribers.push_back(s); }
-    void unsubscribe(Subscriber* s) override { /* Remove from list */ }
-    void notify(const std::string& videoTitle) override {
-        for (auto s : subscribers) {
-            s->update(name, videoTitle);
+    BankAccount(std::string accNum) : accountNumber(accNum) {}
+
+    void attach(std::shared_ptr<TransactionObserver> observer) {
+        observers.push_back(observer);
+    }
+
+    void detach(std::shared_ptr<TransactionObserver> observer) {
+        observers.erase(
+            std::remove(observers.begin(), observers.end(), observer),
+            observers.end()
+        );
+    }
+
+    void deposit(double amount) {
+        balance += amount;
+        notify(amount);
+    }
+
+    void notify(double amount) {
+        for (const auto& observer : observers) {
+            observer->update(amount, balance);
         }
     }
 };
@@ -170,7 +223,7 @@ public:
 \subsection{Pros}
 \begin{itemize}
     \item \textbf{Loose Coupling:} The Subject and Observers are loosely coupled. The Subject only knows that the observer implements a specific interface.
-    \item \textbf{Support for Broadcast Communication:} Unlike direct calls, notifications are broadcast automatically to all registered subscribers.
+    \item \textbf{Support for Broadcast Communication:} Unlike direct calls, notifications are broadcast automatically to all registered observers.
     \item \textbf{Open-Closed Principle:} We can introduce new concrete observer classes without changing the subject's code.
 \end{itemize}
 
@@ -205,7 +258,7 @@ Here are some interactive questions to review the Observer pattern:
         \item[D)] Architectural
     \end{itemize}
     
-    \item Which SOLID principle does the Observer pattern primarily help satisfy when adding new subscribers?
+    \item Which SOLID principle does the Observer pattern primarily help satisfy when adding new observers?
     \begin{itemize}
         \item[A)] Liskov Substitution Principle
         \item[B)] Single Responsibility Principle
