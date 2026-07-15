@@ -43,10 +43,10 @@ classDiagram
         + void trackEvent(string eventType, double amount)
     }
 
-    BankAccount o-- UIUpdateService : aggregation
-    BankAccount o-- EmailService : aggregation
-    BankAccount o-- LoggerService : aggregation
-    BankAccount o-- FraudDetectionService : aggregation
-    BankAccount o-- MobileAppService : aggregation
-    BankAccount o-- AnalyticsService : aggregation
+    BankAccount o-- UIUpdateService
+    BankAccount o-- EmailService
+    BankAccount o-- LoggerService
+    BankAccount o-- FraudDetectionService
+    BankAccount o-- MobileAppService
+    BankAccount o-- AnalyticsService
 ```
