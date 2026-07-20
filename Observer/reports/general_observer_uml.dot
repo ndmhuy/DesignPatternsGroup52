@@ -1,0 +1,53 @@
+digraph G {
+    fontname = "Helvetica,Arial,sans-serif"
+    fontsize = 10
+    rankdir = BT
+    nodesep = 0.8
+    ranksep = 0.6
+    
+    node [
+        fontname = "Helvetica,Arial,sans-serif"
+        fontsize = 10
+        shape = plain
+    ]
+    edge [
+        fontname = "Helvetica,Arial,sans-serif"
+        fontsize = 9
+        arrowhead = empty
+    ]
+
+    ISubject [label=<<table border="0" cellborder="1" cellspacing="0" cellpadding="6" bgcolor="#FFFFFF">
+        <tr><td bgcolor="#B3E5FC"><b>«interface»<br/>ISubject</b></td></tr>
+        <tr><td align="left" bgcolor="#F5F5F5"> </td></tr>
+        <tr><td align="left">+ attach(obs: IObserver): void<br/>+ detach(obs: IObserver): void<br/>+ notify(): void</td></tr>
+    </table>>]
+
+    ConcreteSubject [label=<<table border="0" cellborder="1" cellspacing="0" cellpadding="6" bgcolor="#FFFFFF">
+        <tr><td bgcolor="#E1BEE7"><b>ConcreteSubject</b></td></tr>
+        <tr><td align="left" bgcolor="#FFFFFF">- subjectState: State</td></tr>
+        <tr><td align="left" bgcolor="#FFFFFF">+ getState(): State<br/>+ setState(s: State): void<br/>+ notify(): void</td></tr>
+    </table>>]
+
+    IObserver [label=<<table border="0" cellborder="1" cellspacing="0" cellpadding="6" bgcolor="#FFFFFF">
+        <tr><td bgcolor="#B3E5FC"><b>«interface»<br/>IObserver</b></td></tr>
+        <tr><td align="left" bgcolor="#F5F5F5"> </td></tr>
+        <tr><td align="left">+ update(): void</td></tr>
+    </table>>]
+
+    ConcreteObserver [label=<<table border="0" cellborder="1" cellspacing="0" cellpadding="6" bgcolor="#FFFFFF">
+        <tr><td bgcolor="#E1BEE7"><b>ConcreteObserver</b></td></tr>
+        <tr><td align="left" bgcolor="#FFFFFF">- observerState: State</td></tr>
+        <tr><td align="left" bgcolor="#FFFFFF">+ update(): void</td></tr>
+    </table>>]
+
+    // Inheritance (Realization)
+    ConcreteSubject -> ISubject [arrowhead=onormal, style=solid]
+    ConcreteObserver -> IObserver [arrowhead=onormal, style=solid]
+
+    // Association / Aggregation from Subject to Observer
+    { rank=same; ISubject; IObserver }
+    { rank=same; ConcreteSubject; ConcreteObserver }
+
+    ISubject -> IObserver [arrowhead=vee, arrowtail=odiamond, dir=both, headlabel="*  ", labeldistance=2.5, minlen=2]
+    ConcreteObserver -> ConcreteSubject [arrowhead=vee, style=dashed, constraint=false, label="subject", labeldistance=2.0]
+}
