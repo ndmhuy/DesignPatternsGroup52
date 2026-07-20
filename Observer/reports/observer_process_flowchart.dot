@@ -1,0 +1,38 @@
+digraph G {
+    fontname = "Helvetica,Arial,sans-serif"
+    fontsize = 10
+    rankdir = LR
+    nodesep = 0.5
+    ranksep = 0.6
+    splines = true
+    
+    node [
+        fontname = "Helvetica,Arial,sans-serif"
+        fontsize = 10
+        shape = box
+        style = "filled,rounded"
+        color = "#78909C"
+        width = 2.0
+        height = 0.7
+        penwidth = 1.5
+    ]
+    
+    edge [
+        fontname = "Helvetica,Arial,sans-serif"
+        fontsize = 9
+        penwidth = 1.2
+    ]
+
+    Event [label="Change Event\n(e.g., SetState())", fillcolor="#FFE0B2", color="#FB8C00"]
+    Subject [label="Subject\n(State change notification)", fillcolor="#C8E6C9", color="#4CAF50"]
+    Observer [label="Observer\n(Updates self with state)", fillcolor="#E1BEE7", color="#9C27B0"]
+
+    // Horizontal Flow
+    Event -> Subject [label=" 1. Triggers change", color="#E65100", fontcolor="#E65100"]
+    
+    // We can use ports to keep the forward and backward paths completely separate
+    Subject -> Observer [label=" 2. Calls Update()", color="#1B5E20", fontcolor="#1B5E20", headport="nw", tailport="se"]
+    
+    // Back arrow (pull model) - routed via top or bottom ports
+    Observer -> Subject [label=" 3. Pulls state (GetState())", style=dashed, color="#4A148C", fontcolor="#4A148C", constraint=false, headport="sw", tailport="ne"]
+}
