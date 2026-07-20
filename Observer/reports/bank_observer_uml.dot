@@ -1,9 +1,9 @@
 digraph G {
     fontname = "Helvetica,Arial,sans-serif"
     fontsize = 10
-    rankdir = BT
-    nodesep = 0.5
-    ranksep = 0.6
+    rankdir = LR
+    nodesep = 0.25
+    ranksep = 0.4
     
     node [
         fontname = "Helvetica,Arial,sans-serif"
@@ -16,55 +16,49 @@ digraph G {
         arrowhead = empty
     ]
 
-    BankAccount [label=<<table border="0" cellborder="1" cellspacing="0" cellpadding="6" bgcolor="#FFFFFF">
+    BankAccount [label=<<table border="0" cellborder="1" cellspacing="0" cellpadding="5" bgcolor="#FFFFFF">
         <tr><td bgcolor="#C8E6C9"><b>BankAccount</b></td></tr>
         <tr><td align="left" bgcolor="#FFFFFF">- balance_: double<br/>- observers_: vector&lt;shared_ptr&lt;AccountObserver&gt;&gt;</td></tr>
-        <tr><td align="left" bgcolor="#FFFFFF">+ BankAccount(initialBalance: double = 0.0)<br/>+ attach(observer: shared_ptr&lt;AccountObserver&gt;): void<br/>+ detach(observer: shared_ptr&lt;AccountObserver&gt;): void<br/>+ notify(type: string, amount: double): void<br/>+ deposit(amount: double): void<br/>+ withdraw(amount: double): void<br/>+ getBalance(): double</td></tr>
+        <tr><td align="left" bgcolor="#FFFFFF">+ BankAccount(initialBalance: double)<br/>+ attach(observer: shared_ptr): void<br/>+ detach(observer: shared_ptr): void<br/>+ notify(type: string, amount: double): void<br/>+ deposit(amount: double): void<br/>+ withdraw(amount: double): void<br/>+ getBalance(): double</td></tr>
     </table>>]
 
-    AccountObserver [label=<<table border="0" cellborder="1" cellspacing="0" cellpadding="6" bgcolor="#FFFFFF">
+    AccountObserver [label=<<table border="0" cellborder="1" cellspacing="0" cellpadding="5" bgcolor="#FFFFFF">
         <tr><td bgcolor="#B3E5FC"><b>«interface»<br/>AccountObserver</b></td></tr>
-        <tr><td align="left" bgcolor="#F5F5F5"> </td></tr>
-        <tr><td align="left">+ onTransaction(type: string, amount: double, currentBalance: double): void</td></tr>
+        <tr><td align="left" bgcolor="#FFFFFF">+ onTransaction(type: string, amount: double, balance: double): void</td></tr>
     </table>>]
 
-    UIObserver [label=<<table border="0" cellborder="1" cellspacing="0" cellpadding="6" bgcolor="#FFFFFF">
+    // Concrete Observers - simplified and compact
+    UIObserver [label=<<table border="0" cellborder="1" cellspacing="0" cellpadding="4" bgcolor="#FFFFFF">
         <tr><td bgcolor="#E1BEE7"><b>UIObserver</b></td></tr>
-        <tr><td align="left" bgcolor="#F5F5F5"> </td></tr>
-        <tr><td align="left">+ onTransaction(type: string, ...): void</td></tr>
+        <tr><td align="left" bgcolor="#FFFFFF">+ onTransaction(...)</td></tr>
     </table>>]
 
-    EmailObserver [label=<<table border="0" cellborder="1" cellspacing="0" cellpadding="6" bgcolor="#FFFFFF">
+    EmailObserver [label=<<table border="0" cellborder="1" cellspacing="0" cellpadding="4" bgcolor="#FFFFFF">
         <tr><td bgcolor="#E1BEE7"><b>EmailObserver</b></td></tr>
-        <tr><td align="left" bgcolor="#F5F5F5"> </td></tr>
-        <tr><td align="left">+ onTransaction(type: string, ...): void</td></tr>
+        <tr><td align="left" bgcolor="#FFFFFF">+ onTransaction(...)</td></tr>
     </table>>]
 
-    LoggerObserver [label=<<table border="0" cellborder="1" cellspacing="0" cellpadding="6" bgcolor="#FFFFFF">
+    LoggerObserver [label=<<table border="0" cellborder="1" cellspacing="0" cellpadding="4" bgcolor="#FFFFFF">
         <tr><td bgcolor="#E1BEE7"><b>LoggerObserver</b></td></tr>
-        <tr><td align="left" bgcolor="#F5F5F5"> </td></tr>
-        <tr><td align="left">+ onTransaction(type: string, ...): void</td></tr>
+        <tr><td align="left" bgcolor="#FFFFFF">+ onTransaction(...)</td></tr>
     </table>>]
 
-    FraudAIObserver [label=<<table border="0" cellborder="1" cellspacing="0" cellpadding="6" bgcolor="#FFFFFF">
+    FraudAIObserver [label=<<table border="0" cellborder="1" cellspacing="0" cellpadding="4" bgcolor="#FFFFFF">
         <tr><td bgcolor="#E1BEE7"><b>FraudAIObserver</b></td></tr>
-        <tr><td align="left" bgcolor="#F5F5F5"> </td></tr>
-        <tr><td align="left">+ onTransaction(type: string, ...): void</td></tr>
+        <tr><td align="left" bgcolor="#FFFFFF">+ onTransaction(...)</td></tr>
     </table>>]
 
-    MobileAppObserver [label=<<table border="0" cellborder="1" cellspacing="0" cellpadding="6" bgcolor="#FFFFFF">
+    MobileAppObserver [label=<<table border="0" cellborder="1" cellspacing="0" cellpadding="4" bgcolor="#FFFFFF">
         <tr><td bgcolor="#E1BEE7"><b>MobileAppObserver</b></td></tr>
-        <tr><td align="left" bgcolor="#F5F5F5"> </td></tr>
-        <tr><td align="left">+ onTransaction(type: string, ...): void</td></tr>
+        <tr><td align="left" bgcolor="#FFFFFF">+ onTransaction(...)</td></tr>
     </table>>]
 
-    AnalyticsObserver [label=<<table border="0" cellborder="1" cellspacing="0" cellpadding="6" bgcolor="#FFFFFF">
+    AnalyticsObserver [label=<<table border="0" cellborder="1" cellspacing="0" cellpadding="4" bgcolor="#FFFFFF">
         <tr><td bgcolor="#E1BEE7"><b>AnalyticsObserver</b></td></tr>
-        <tr><td align="left" bgcolor="#F5F5F5"> </td></tr>
-        <tr><td align="left">+ onTransaction(type: string, ...): void</td></tr>
+        <tr><td align="left" bgcolor="#FFFFFF">+ onTransaction(...)</td></tr>
     </table>>]
 
-    // Realizations (inherits AccountObserver)
+    // Realizations (pointing back to interface)
     UIObserver -> AccountObserver [arrowhead=onormal, style=solid]
     EmailObserver -> AccountObserver [arrowhead=onormal, style=solid]
     LoggerObserver -> AccountObserver [arrowhead=onormal, style=solid]
@@ -72,10 +66,15 @@ digraph G {
     MobileAppObserver -> AccountObserver [arrowhead=onormal, style=solid]
     AnalyticsObserver -> AccountObserver [arrowhead=onormal, style=solid]
 
-    // Association / Aggregation from BankAccount to AccountObserver
-    BankAccount -> AccountObserver [arrowhead=vee, arrowtail=odiamond, dir=both, headlabel="*  ", labeldistance=2.5]
+    // Association from BankAccount to AccountObserver
+    BankAccount -> AccountObserver [arrowhead=vee, arrowtail=odiamond, dir=both, headlabel="*  ", labeldistance=1.5]
 
-    // Set layout rank to group observers nicely
-    { rank=same; BankAccount; AccountObserver }
-    { rank=same; UIObserver; EmailObserver; LoggerObserver; FraudAIObserver; MobileAppObserver; AnalyticsObserver }
+    // Layout alignment: Group concrete observers into 2 columns
+    { rank=same; UIObserver; EmailObserver; LoggerObserver }
+    { rank=same; FraudAIObserver; MobileAppObserver; AnalyticsObserver }
+
+    // Enforce horizontal alignment between columns
+    UIObserver -> FraudAIObserver [style=invis]
+    EmailObserver -> MobileAppObserver [style=invis]
+    LoggerObserver -> AnalyticsObserver [style=invis]
 }
