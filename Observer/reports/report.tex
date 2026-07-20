@@ -224,7 +224,9 @@ public:
 \begin{itemize}
     \item \textbf{RxSwift / RxJava / RxKotlin:} Reactive streams rely heavily on observing data sequences and binding them directly to UI components.
     \item \textbf{SwiftUI/Android Jetpack Compose:} Declarative UI frameworks use property wrappers like \texttt{@Published} and state flows to push model updates directly to the view.
-\end{itemize}\section{Observer and Mediator Fusion}
+\end{itemize}
+
+\section{Observer and Mediator Fusion}
 In complex system architectures, the \textit{Observer} and \textit{Mediator} patterns are frequently fused together to handle coordination and communication between multiple components. 
 
 In a standard Mediator implementation, colleagues must explicitly call the mediator, and the mediator directly invokes actions on other colleagues. By fusing the two patterns:
@@ -246,6 +248,54 @@ This fusion achieves dynamic event-driven routing while preserving loose couplin
     \includegraphics[width=0.85\textwidth]{observer_mediator_flowchart.png}
     \caption{Process Flowchart of Event-Driven Mediation Flow}
     \label{fig:observer_mediator_flowchart}
+\end{figure}
+
+\subsection{Case Study: Super Mario Game EventBus}
+In game development, handling interactions between numerous entities and systems (e.g., updating UI when a player dies, unlocking achievements when a coin is collected, playing sounds when blocks break) can easily lead to spaghetti code and tight coupling. To solve this, a decentralized event-routing system known as an \textbf{EventBus} is used.
+
+The \texttt{EventBus} acts as a central singleton \textit{Mediator}. Colleagues (such as the \texttt{Player} or \texttt{POWBlock}) publish events to the \texttt{EventBus} without knowing who reacts to them. Other systems (such as the \texttt{StatisticsTracker} or \texttt{AchievementManager}) register as \textit{Observers} to specific event types.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{mario_eventbus_uml.png}
+    \caption{UML Class Diagram for Super Mario Game EventBus System}
+    \label{fig:mario_eventbus_uml}
+\end{figure}
+
+The C++ interface for the game's EventBus is implemented as follows:
+\begin{lstlisting}[language=C++]
+// include/Core/EventBus.hpp
+class EventBus {
+public:
+  using Callback = std::function<void(const GameEvent &)>;
+  using SubscriptionId = size_t;
+
+  // Singleton Instance access
+  static EventBus &getInstance();
+
+  // Event operations (Mediating Hub)
+  SubscriptionId subscribe(EventType type, Callback callback);
+  void unsubscribe(SubscriptionId id);
+  void publish(const GameEvent &event);
+
+private:
+  EventBus() = default;
+  
+  struct Subscription {
+    SubscriptionId id;
+    Callback callback;
+  };
+
+  std::unordered_map<EventType, std::vector<Subscription>> m_subscribers;
+  SubscriptionId m_nextId = 0;
+};
+\end{lstlisting}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\textwidth]{mario_eventbus_demo.png}
+    \caption{Console Output Simulation of EventBus Event-Driven Mediation}
+    \label{fig:mario_eventbus_demo}
 \end{figure}
 
 \section{Quiz}
