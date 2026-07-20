@@ -223,7 +223,29 @@ public:
 \begin{itemize}
     \item \textbf{RxSwift / RxJava / RxKotlin:} Reactive streams rely heavily on observing data sequences and binding them directly to UI components.
     \item \textbf{SwiftUI/Android Jetpack Compose:} Declarative UI frameworks use property wrappers like \texttt{@Published} and state flows to push model updates directly to the view.
+\end{itemize}\section{Observer and Mediator Fusion}
+In complex system architectures, the \textit{Observer} and \textit{Mediator} patterns are frequently fused together to handle coordination and communication between multiple components. 
+
+In a standard Mediator implementation, colleagues must explicitly call the mediator, and the mediator directly invokes actions on other colleagues. By fusing the two patterns:
+\begin{itemize}
+    \item \textbf{Colleagues act as Subjects:} They maintain state and notify registered observers when changes occur, remaining completely unaware of who is listening.
+    \item \textbf{The Mediator acts as an Observer:} It subscribes to the event streams of the Colleagues. When it receives an \texttt{update()} notification, it coordinates and executes the required reaction across other Colleagues.
 \end{itemize}
+This fusion achieves dynamic event-driven routing while preserving loose coupling between Colleagues.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.9\textwidth]{observer_mediator_uml.png}
+    \caption{UML Class Diagram of the Observer-Mediator Fusion}
+    \label{fig:observer_mediator_uml}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.85\textwidth]{observer_mediator_flowchart.png}
+    \caption{Process Flowchart of Event-Driven Mediation Flow}
+    \label{fig:observer_mediator_flowchart}
+\end{figure}
 
 \section{Quiz}
 Here are some interactive questions to review the Observer pattern:
