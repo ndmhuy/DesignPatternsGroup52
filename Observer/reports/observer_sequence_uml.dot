@@ -2,8 +2,8 @@ digraph G {
     fontname = "Helvetica,Arial,sans-serif"
     fontsize = 10
     rankdir = TB
-    nodesep = 0.6
-    ranksep = 0.4
+    nodesep = 0.5
+    ranksep = 0.35
     
     // Participant box styling
     node [
@@ -13,7 +13,7 @@ digraph G {
         style = "filled,rounded"
         fillcolor = "#ECEFF1"
         color = "#78909C"
-        width = 1.4
+        width = 1.6
         height = 0.5
     ]
     
@@ -24,36 +24,55 @@ digraph G {
     ]
     
     // Top participants
-    client [label="Client", fillcolor="#FFE0B2"]
-    account [label="BankAccount\n(Subject)", fillcolor="#C8E6C9"]
-    ui [label="UIObserver\n(Observer)", fillcolor="#E1BEE7"]
-    email [label="EmailObserver\n(Observer)", fillcolor="#E1BEE7"]
+    client [label="aClient\n(Client)", fillcolor="#FFE0B2"]
+    subject [label="aConcreteSubject\n(ConcreteSubject)", fillcolor="#C8E6C9"]
+    observer1 [label="anObserver1\n(ConcreteObserver)", fillcolor="#E1BEE7"]
+    observer2 [label="anObserver2\n(ConcreteObserver)", fillcolor="#E1BEE7"]
     
     // Invisible lifeline nodes
     node [shape=point, width=0, height=0, label="", style=invis]
     
     // Vertical lifelines
-    client -> c1 -> c2 -> c3 -> c4 -> c5 [style=dashed, arrowhead=none, color="#90A4AE"]
-    account -> a1 -> a2 -> a3 -> a4 -> a5 [style=dashed, arrowhead=none, color="#90A4AE"]
-    ui -> u1 -> u2 -> u3 -> u4 -> u5 [style=dashed, arrowhead=none, color="#90A4AE"]
-    email -> e1 -> e2 -> e3 -> e4 -> e5 [style=dashed, arrowhead=none, color="#90A4AE"]
+    client -> c1 -> c2 -> c3 -> c4 -> c5 -> c6 -> c7 -> c8 -> c9 [style=dashed, arrowhead=none, color="#90A4AE"]
+    subject -> s1 -> s2 -> s3 -> s4 -> s5 -> s6 -> s7 -> s8 -> s9 [style=dashed, arrowhead=none, color="#90A4AE"]
+    observer1 -> o11 -> o12 -> o13 -> o14 -> o15 -> o16 -> o17 -> o18 -> o19 [style=dashed, arrowhead=none, color="#90A4AE"]
+    observer2 -> o21 -> o22 -> o23 -> o24 -> o25 -> o26 -> o27 -> o28 -> o29 [style=dashed, arrowhead=none, color="#90A4AE"]
     
     // Messages
     edge [style=solid, arrowhead=vee, constraint=false]
     
-    c1 -> a1 [label=" deposit(250.0)"]
+    // Step 1: SetState()
+    c1 -> s1 [label=" SetState(newState)"]
     
-    // Self-message / loop notification simulation
-    a2 -> a3 [label=" notify(\"Deposit\", 250.0)", style=dashed, arrowhead=vee, color="#546E7A"]
+    // Step 2: Notify() self-call
+    s2 -> s3 [label=" Notify()", color="#546E7A"]
     
-    a3 -> u3 [label=" onTransaction(\"Deposit\", 250.0, 1250.0)"]
-    a4 -> e4 [label=" onTransaction(\"Deposit\", 250.0, 1250.0)"]
+    // Step 3: Update() observer 1
+    s3 -> o13 [label=" Update()"]
+    
+    // Step 4: GetState() pull call
+    o14 -> s4 [label=" GetState()"]
+    
+    // Step 5: subjectState return
+    s5 -> o15 [label=" subjectState", style=dashed, arrowhead=vee]
+    
+    // Step 6: Update() observer 2
+    s6 -> o26 [label=" Update()"]
+    
+    // Step 7: GetState() pull call
+    o27 -> s7 [label=" GetState()"]
+    
+    // Step 8: subjectState return
+    s8 -> o28 [label=" subjectState", style=dashed, arrowhead=vee]
     
     // Ranks to align messages horizontally
-    { rank=same; client; account; ui; email }
-    { rank=same; c1; a1 }
-    { rank=same; c2; a2 }
-    { rank=same; c3; a3; u3 }
-    { rank=same; c4; a4; e4 }
-    { rank=same; c5; a5; u5; e5 }
+    { rank=same; client; subject; observer1; observer2 }
+    { rank=same; c1; s1 }
+    { rank=same; c2; s2 }
+    { rank=same; c3; s3; o13 }
+    { rank=same; c4; s4; o14 }
+    { rank=same; c5; s5; o15 }
+    { rank=same; c6; s6; o26 }
+    { rank=same; c7; s7; o27 }
+    { rank=same; c8; s8; o28 }
 }

@@ -3,7 +3,7 @@ digraph G {
     fontsize = 10
     rankdir = BT
     nodesep = 0.8
-    ranksep = 0.7
+    ranksep = 0.6
     
     node [
         fontname = "Helvetica,Arial,sans-serif"
@@ -13,63 +13,41 @@ digraph G {
     edge [
         fontname = "Helvetica,Arial,sans-serif"
         fontsize = 9
+        arrowhead = empty
     ]
 
-    Subject [label=<<table border="0" cellborder="1" cellspacing="0" cellpadding="6" bgcolor="#FFFFFF">
-        <tr><td bgcolor="#ECEFF1"><b><i>Subject</i></b></td></tr>
-        <tr><td align="left" bgcolor="#FFFFFF">Attach(Observer)<br/>Detach(Observer)<br/>Notify()</td></tr>
+    ISubject [label=<<table border="0" cellborder="1" cellspacing="0" cellpadding="6" bgcolor="#FFFFFF">
+        <tr><td bgcolor="#B3E5FC"><b>«interface»<br/>ISubject</b></td></tr>
+        <tr><td align="left" bgcolor="#F5F5F5"> </td></tr>
+        <tr><td align="left">+ attach(obs: IObserver): void<br/>+ detach(obs: IObserver): void<br/>+ notify(): void</td></tr>
     </table>>]
 
     ConcreteSubject [label=<<table border="0" cellborder="1" cellspacing="0" cellpadding="6" bgcolor="#FFFFFF">
-        <tr><td bgcolor="#ECEFF1"><b>ConcreteSubject</b></td></tr>
-        <tr><td align="left" bgcolor="#FFFFFF">GetState()<br/>SetState()</td></tr>
-        <tr><td align="left" bgcolor="#FFFFFF">subjectState</td></tr>
+        <tr><td bgcolor="#E1BEE7"><b>ConcreteSubject</b></td></tr>
+        <tr><td align="left" bgcolor="#FFFFFF">- subjectState: State</td></tr>
+        <tr><td align="left" bgcolor="#FFFFFF">+ getState(): State<br/>+ setState(s: State): void<br/>+ notify(): void</td></tr>
     </table>>]
 
-    Observer [label=<<table border="0" cellborder="1" cellspacing="0" cellpadding="6" bgcolor="#FFFFFF">
-        <tr><td bgcolor="#ECEFF1"><b><i>Observer</i></b></td></tr>
-        <tr><td align="left" bgcolor="#FFFFFF">Update()</td></tr>
+    IObserver [label=<<table border="0" cellborder="1" cellspacing="0" cellpadding="6" bgcolor="#FFFFFF">
+        <tr><td bgcolor="#B3E5FC"><b>«interface»<br/>IObserver</b></td></tr>
+        <tr><td align="left" bgcolor="#F5F5F5"> </td></tr>
+        <tr><td align="left">+ update(): void</td></tr>
     </table>>]
 
     ConcreteObserver [label=<<table border="0" cellborder="1" cellspacing="0" cellpadding="6" bgcolor="#FFFFFF">
-        <tr><td bgcolor="#ECEFF1"><b>ConcreteObserver</b></td></tr>
-        <tr><td align="left" bgcolor="#FFFFFF">Update()</td></tr>
-        <tr><td align="left" bgcolor="#FFFFFF">observerState</td></tr>
+        <tr><td bgcolor="#E1BEE7"><b>ConcreteObserver</b></td></tr>
+        <tr><td align="left" bgcolor="#FFFFFF">- observerState: State</td></tr>
+        <tr><td align="left" bgcolor="#FFFFFF">+ update(): void</td></tr>
     </table>>]
 
-    // Note styling
-    node [
-        shape = note
-        fontname = "Courier New,Courier,monospace"
-        fontsize = 8.5
-        style = filled
-        fillcolor = "#FFFDE7"
-        color = "#FBC02D"
-    ]
-    
-    note_notify [label="for all o in observers {\n  o-&gt;Update()\n}"]
-    note_getstate [label="return subjectState"]
-    note_update [label="observerState =\n  subject-&gt;GetState()"]
+    // Inheritance (Realization)
+    ConcreteSubject -> ISubject [arrowhead=onormal, style=solid]
+    ConcreteObserver -> IObserver [arrowhead=onormal, style=solid]
 
-    // Realizations (inheritance from Concrete to Abstract)
-    edge [arrowhead=onormal, style=solid, constraint=true]
-    ConcreteSubject -> Subject
-    ConcreteObserver -> Observer
+    // Association / Aggregation from Subject to Observer
+    { rank=same; ISubject; IObserver }
+    { rank=same; ConcreteSubject; ConcreteObserver }
 
-    // Associations
-    edge [arrowhead=vee, style=solid, constraint=false]
-    // Subject has observers
-    Subject -> Observer [label="observers", labeldistance=2.0, headport="w", tailport="e"]
-    // ConcreteObserver has subject
-    ConcreteObserver -> ConcreteSubject [label="subject", labeldistance=2.0, headport="e", tailport="w"]
-
-    // Note connections (dashed, no arrowheads)
-    edge [style=dashed, arrowhead=none, constraint=false, color="#78909C"]
-    Subject -> note_notify
-    ConcreteSubject -> note_getstate
-    ConcreteObserver -> note_update
-
-    // Ranks for alignment
-    { rank=same; Subject; Observer; note_notify }
-    { rank=same; ConcreteSubject; ConcreteObserver; note_getstate; note_update }
+    ISubject -> IObserver [arrowhead=vee, arrowtail=odiamond, dir=both, headlabel="*  ", labeldistance=2.5, minlen=2]
+    ConcreteObserver -> ConcreteSubject [arrowhead=vee, style=dashed, constraint=false, label="subject", labeldistance=2.0]
 }
