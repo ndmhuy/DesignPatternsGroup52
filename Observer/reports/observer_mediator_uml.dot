@@ -16,6 +16,7 @@ digraph G {
         arrowhead = empty
     ]
 
+    // Top Row (Left to Right)
     IMediator [label=<<table border="0" cellborder="1" cellspacing="0" cellpadding="6" bgcolor="#FFFFFF">
         <tr><td bgcolor="#B3E5FC"><b>«interface»<br/>IMediator</b></td></tr>
         <tr><td align="left" bgcolor="#F5F5F5"> </td></tr>
@@ -34,6 +35,7 @@ digraph G {
         <tr><td align="left">+ attach(obs: IObserver): void<br/>+ detach(obs: IObserver): void<br/>+ notify(): void</td></tr>
     </table>>]
 
+    // Middle Row (Left to Right)
     ConcreteMediator [label=<<table border="0" cellborder="1" cellspacing="0" cellpadding="6" bgcolor="#FFFFFF">
         <tr><td bgcolor="#E1BEE7"><b>ConcreteMediator</b></td></tr>
         <tr><td align="left" bgcolor="#FFFFFF">- colleagues: List&lt;Colleague&gt;</td></tr>
@@ -46,6 +48,7 @@ digraph G {
         <tr><td align="left" bgcolor="#FFFFFF">+ setMediator(m: IMediator): void</td></tr>
     </table>>]
 
+    // Bottom Row
     ConcreteColleagueA [label=<<table border="0" cellborder="1" cellspacing="0" cellpadding="6" bgcolor="#FFFFFF">
         <tr><td bgcolor="#E1BEE7"><b>ConcreteColleagueA</b></td></tr>
         <tr><td align="left" bgcolor="#F5F5F5"> </td></tr>
@@ -58,19 +61,27 @@ digraph G {
         <tr><td align="left" bgcolor="#FFFFFF">+ changeState(): void</td></tr>
     </table>>]
 
-    // Inheritance / Realization
+    // Realizations
     ConcreteMediator -> IMediator [arrowhead=onormal, style=solid]
     ConcreteMediator -> IObserver [arrowhead=onormal, style=solid]
     Colleague -> ISubject [arrowhead=onormal, style=solid]
+    
+    // Inheritances
     ConcreteColleagueA -> Colleague [arrowhead=onormal, style=solid]
     ConcreteColleagueB -> Colleague [arrowhead=onormal, style=solid]
 
-    // Associations & Aggregations
+    // Rank constraints to enforce left-to-right grid layout
     { rank=same; IMediator; IObserver; ISubject }
     { rank=same; ConcreteMediator; Colleague }
     { rank=same; ConcreteColleagueA; ConcreteColleagueB }
 
+    // Associations
+    // Subject to Observer (horizontal right-to-left)
     ISubject -> IObserver [arrowhead=vee, arrowtail=odiamond, dir=both, headlabel="*  ", labeldistance=2.0]
-    Colleague -> IMediator [arrowhead=vee, label="mediator", labeldistance=2.0]
-    ConcreteMediator -> Colleague [arrowhead=vee, label="colleagues", headlabel="*  ", labeldistance=2.0]
+    
+    // Colleague to IMediator (up-left)
+    Colleague -> IMediator [arrowhead=vee, label="mediator", labeldistance=2.5]
+    
+    // ConcreteMediator to Colleague (horizontal left-to-right)
+    ConcreteMediator -> Colleague [arrowhead=vee, label="colleagues", headlabel="*  ", labeldistance=1.8]
 }
