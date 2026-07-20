@@ -1,0 +1,59 @@
+digraph G {
+    fontname = "Helvetica,Arial,sans-serif"
+    fontsize = 10
+    rankdir = TB
+    nodesep = 0.6
+    ranksep = 0.4
+    
+    // Participant box styling
+    node [
+        fontname = "Helvetica,Arial,sans-serif"
+        fontsize = 10
+        shape = rectangle
+        style = "filled,rounded"
+        fillcolor = "#ECEFF1"
+        color = "#78909C"
+        width = 1.4
+        height = 0.5
+    ]
+    
+    edge [
+        fontname = "Helvetica,Arial,sans-serif"
+        fontsize = 9
+        color = "#37474F"
+    ]
+    
+    // Top participants
+    client [label="Client", fillcolor="#FFE0B2"]
+    account [label="BankAccount\n(Subject)", fillcolor="#C8E6C9"]
+    ui [label="UIObserver\n(Observer)", fillcolor="#E1BEE7"]
+    email [label="EmailObserver\n(Observer)", fillcolor="#E1BEE7"]
+    
+    // Invisible lifeline nodes
+    node [shape=point, width=0, height=0, label="", style=invis]
+    
+    // Vertical lifelines
+    client -> c1 -> c2 -> c3 -> c4 -> c5 [style=dashed, arrowhead=none, color="#90A4AE"]
+    account -> a1 -> a2 -> a3 -> a4 -> a5 [style=dashed, arrowhead=none, color="#90A4AE"]
+    ui -> u1 -> u2 -> u3 -> u4 -> u5 [style=dashed, arrowhead=none, color="#90A4AE"]
+    email -> e1 -> e2 -> e3 -> e4 -> e5 [style=dashed, arrowhead=none, color="#90A4AE"]
+    
+    // Messages
+    edge [style=solid, arrowhead=vee, constraint=false]
+    
+    c1 -> a1 [label=" deposit(250.0)"]
+    
+    // Self-message / loop notification simulation
+    a2 -> a3 [label=" notify(\"Deposit\", 250.0)", style=dashed, arrowhead=vee, color="#546E7A"]
+    
+    a3 -> u3 [label=" onTransaction(\"Deposit\", 250.0, 1250.0)"]
+    a4 -> e4 [label=" onTransaction(\"Deposit\", 250.0, 1250.0)"]
+    
+    // Ranks to align messages horizontally
+    { rank=same; client; account; ui; email }
+    { rank=same; c1; a1 }
+    { rank=same; c2; a2 }
+    { rank=same; c3; a3; u3 }
+    { rank=same; c4; a4; e4 }
+    { rank=same; c5; a5; u5; e5 }
+}
