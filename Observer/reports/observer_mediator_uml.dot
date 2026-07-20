@@ -16,17 +16,17 @@ digraph G {
         arrowhead = empty
     ]
 
-    // Top Row (Left to Right)
-    IMediator [label=<<table border="0" cellborder="1" cellspacing="0" cellpadding="6" bgcolor="#FFFFFF">
-        <tr><td bgcolor="#B3E5FC"><b>«interface»<br/>IMediator</b></td></tr>
-        <tr><td align="left" bgcolor="#F5F5F5"> </td></tr>
-        <tr><td align="left">+ mediate(sender: Colleague, event: string): void</td></tr>
-    </table>>]
-
+    // Top Row (Left to Right: IObserver, IMediator, ISubject)
     IObserver [label=<<table border="0" cellborder="1" cellspacing="0" cellpadding="6" bgcolor="#FFFFFF">
         <tr><td bgcolor="#B3E5FC"><b>«interface»<br/>IObserver</b></td></tr>
         <tr><td align="left" bgcolor="#F5F5F5"> </td></tr>
         <tr><td align="left">+ update(subject: ISubject): void</td></tr>
+    </table>>]
+
+    IMediator [label=<<table border="0" cellborder="1" cellspacing="0" cellpadding="6" bgcolor="#FFFFFF">
+        <tr><td bgcolor="#B3E5FC"><b>«interface»<br/>IMediator</b></td></tr>
+        <tr><td align="left" bgcolor="#F5F5F5"> </td></tr>
+        <tr><td align="left">+ mediate(sender: Colleague, event: string): void</td></tr>
     </table>>]
 
     ISubject [label=<<table border="0" cellborder="1" cellspacing="0" cellpadding="6" bgcolor="#FFFFFF">
@@ -35,7 +35,7 @@ digraph G {
         <tr><td align="left">+ attach(obs: IObserver): void<br/>+ detach(obs: IObserver): void<br/>+ notify(): void</td></tr>
     </table>>]
 
-    // Middle Row (Left to Right)
+    // Middle Row (Left to Right: ConcreteMediator, Colleague)
     ConcreteMediator [label=<<table border="0" cellborder="1" cellspacing="0" cellpadding="6" bgcolor="#FFFFFF">
         <tr><td bgcolor="#E1BEE7"><b>ConcreteMediator</b></td></tr>
         <tr><td align="left" bgcolor="#FFFFFF">- colleagues: List&lt;Colleague&gt;</td></tr>
@@ -62,16 +62,16 @@ digraph G {
     </table>>]
 
     // Realizations
-    ConcreteMediator -> IMediator [arrowhead=onormal, style=solid]
     ConcreteMediator -> IObserver [arrowhead=onormal, style=solid]
+    ConcreteMediator -> IMediator [arrowhead=onormal, style=solid]
     Colleague -> ISubject [arrowhead=onormal, style=solid]
     
     // Inheritances
     ConcreteColleagueA -> Colleague [arrowhead=onormal, style=solid]
     ConcreteColleagueB -> Colleague [arrowhead=onormal, style=solid]
 
-    // Rank constraints to enforce left-to-right grid layout
-    { rank=same; IMediator; IObserver; ISubject }
+    // Layout alignment constraints
+    { rank=same; IObserver; IMediator; ISubject }
     { rank=same; ConcreteMediator; Colleague }
     { rank=same; ConcreteColleagueA; ConcreteColleagueB }
 

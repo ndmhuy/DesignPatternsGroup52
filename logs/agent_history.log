@@ -216,4 +216,18 @@ Summary of Changes:
   - Re-ordered interfaces to IMediator, IObserver, ISubject and class ranks to place ConcreteMediator left and Colleague right in observer_mediator_uml.dot.
   - Re-rendered observer_mediator_uml.png and compiled report.tex to PDF.
 ---
+[2026-07-20 10:04:00] Branch: main
+Prompt: Rearrange top-row interfaces to eliminate diagonal line crossings in UML DOT and lock figure positions to [H] in report.tex.
+Files Modified:
+  - Observer/reports/observer_mediator_uml.dot
+  - Observer/reports/observer_mediator_uml.png
+  - Observer/reports/report.tex
+  - Observer/reports/report.pdf
+  - logs/agent_history.log
+Summary of Changes:
+  - Rearranged the top-row interfaces in observer_mediator_uml.dot to IObserver (left), IMediator (middle), ISubject (right) to completely eliminate all diagonal line crossings.
+  - Re-rendered observer_mediator_uml.png.
+  - Imported the float package and updated all figures to use the [H] specifier in report.tex to prevent LaTeX from floating the bank flowchart and other diagrams away from their defined locations.
+  - Recompiled the LaTeX report to PDF.
+---
 
