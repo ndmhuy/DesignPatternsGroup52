@@ -1,0 +1,76 @@
+digraph G {
+    fontname = "Helvetica,Arial,sans-serif"
+    fontsize = 10
+    rankdir = BT
+    nodesep = 0.8
+    ranksep = 0.6
+    
+    node [
+        fontname = "Helvetica,Arial,sans-serif"
+        fontsize = 10
+        shape = plain
+    ]
+    edge [
+        fontname = "Helvetica,Arial,sans-serif"
+        fontsize = 9
+        arrowhead = empty
+    ]
+
+    IMediator [label=<<table border="0" cellborder="1" cellspacing="0" cellpadding="6" bgcolor="#FFFFFF">
+        <tr><td bgcolor="#B3E5FC"><b>«interface»<br/>IMediator</b></td></tr>
+        <tr><td align="left" bgcolor="#F5F5F5"> </td></tr>
+        <tr><td align="left">+ mediate(sender: Colleague, event: string): void</td></tr>
+    </table>>]
+
+    IObserver [label=<<table border="0" cellborder="1" cellspacing="0" cellpadding="6" bgcolor="#FFFFFF">
+        <tr><td bgcolor="#B3E5FC"><b>«interface»<br/>IObserver</b></td></tr>
+        <tr><td align="left" bgcolor="#F5F5F5"> </td></tr>
+        <tr><td align="left">+ update(subject: ISubject): void</td></tr>
+    </table>>]
+
+    ISubject [label=<<table border="0" cellborder="1" cellspacing="0" cellpadding="6" bgcolor="#FFFFFF">
+        <tr><td bgcolor="#B3E5FC"><b>«interface»<br/>ISubject</b></td></tr>
+        <tr><td align="left" bgcolor="#F5F5F5"> </td></tr>
+        <tr><td align="left">+ attach(obs: IObserver): void<br/>+ detach(obs: IObserver): void<br/>+ notify(): void</td></tr>
+    </table>>]
+
+    ConcreteMediator [label=<<table border="0" cellborder="1" cellspacing="0" cellpadding="6" bgcolor="#FFFFFF">
+        <tr><td bgcolor="#E1BEE7"><b>ConcreteMediator</b></td></tr>
+        <tr><td align="left" bgcolor="#FFFFFF">- colleagues: List&lt;Colleague&gt;</td></tr>
+        <tr><td align="left" bgcolor="#FFFFFF">+ mediate(sender: Colleague, event: string): void<br/>+ update(subject: ISubject): void</td></tr>
+    </table>>]
+
+    Colleague [label=<<table border="0" cellborder="1" cellspacing="0" cellpadding="6" bgcolor="#FFFFFF">
+        <tr><td bgcolor="#E1BEE7"><b><i>Colleague</i></b></td></tr>
+        <tr><td align="left" bgcolor="#FFFFFF"># mediator: IMediator</td></tr>
+        <tr><td align="left" bgcolor="#FFFFFF">+ setMediator(m: IMediator): void</td></tr>
+    </table>>]
+
+    ConcreteColleagueA [label=<<table border="0" cellborder="1" cellspacing="0" cellpadding="6" bgcolor="#FFFFFF">
+        <tr><td bgcolor="#E1BEE7"><b>ConcreteColleagueA</b></td></tr>
+        <tr><td align="left" bgcolor="#F5F5F5"> </td></tr>
+        <tr><td align="left" bgcolor="#FFFFFF">+ changeState(): void</td></tr>
+    </table>>]
+
+    ConcreteColleagueB [label=<<table border="0" cellborder="1" cellspacing="0" cellpadding="6" bgcolor="#FFFFFF">
+        <tr><td bgcolor="#E1BEE7"><b>ConcreteColleagueB</b></td></tr>
+        <tr><td align="left" bgcolor="#F5F5F5"> </td></tr>
+        <tr><td align="left" bgcolor="#FFFFFF">+ changeState(): void</td></tr>
+    </table>>]
+
+    // Inheritance / Realization
+    ConcreteMediator -> IMediator [arrowhead=onormal, style=solid]
+    ConcreteMediator -> IObserver [arrowhead=onormal, style=solid]
+    Colleague -> ISubject [arrowhead=onormal, style=solid]
+    ConcreteColleagueA -> Colleague [arrowhead=onormal, style=solid]
+    ConcreteColleagueB -> Colleague [arrowhead=onormal, style=solid]
+
+    // Associations & Aggregations
+    { rank=same; IMediator; IObserver; ISubject }
+    { rank=same; ConcreteMediator; Colleague }
+    { rank=same; ConcreteColleagueA; ConcreteColleagueB }
+
+    ISubject -> IObserver [arrowhead=vee, arrowtail=odiamond, dir=both, headlabel="*  ", labeldistance=2.0]
+    Colleague -> IMediator [arrowhead=vee, label="mediator", labeldistance=2.0]
+    ConcreteMediator -> Colleague [arrowhead=vee, label="colleagues", headlabel="*  ", labeldistance=2.0]
+}
