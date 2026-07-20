@@ -242,4 +242,20 @@ Summary of Changes:
   - Compiled the DOT file to observer_flowchart_bank.png.
   - Recompiled the LaTeX report to update the PDF with the new DOT flowchart.
 ---
+[2026-07-20 10:14:00] Branch: main
+Prompt: Add Super Mario Game EventBus case study (UML, code, and simulated console screenshot) as a Mediator-fused example.
+Files Modified:
+  - Observer/reports/mario_eventbus_uml.dot
+  - Observer/reports/mario_eventbus_uml.png
+  - Observer/reports/mario_eventbus_demo.png
+  - Observer/reports/report.tex
+  - Observer/reports/report.pdf
+  - logs/agent_history.log
+Summary of Changes:
+  - Extracted the EventBus architecture from the Super Mario game project.
+  - Created mario_eventbus_uml.dot and rendered it to PNG representing the game's Mediator-fused EventBus model.
+  - Generated mario_eventbus_demo.png as a console output screenshot showing event dispatching, metric tracking, and achievement unlocks.
+  - Integrated the case study (explanation, UML, code snippet, and demo screenshot) into report.tex.
+  - Recompiled the LaTeX report to PDF.
+---
 
