@@ -230,4 +230,16 @@ Summary of Changes:
   - Imported the float package and updated all figures to use the [H] specifier in report.tex to prevent LaTeX from floating the bank flowchart and other diagrams away from their defined locations.
   - Recompiled the LaTeX report to PDF.
 ---
+[2026-07-20 10:07:00] Branch: main
+Prompt: Convert the Bank Account flowchart from TikZ to Graphviz DOT.
+Files Modified:
+  - Observer/reports/observer_flowchart_bank.dot
+  - Observer/reports/observer_flowchart_bank.png
+  - Observer/reports/report.pdf
+  - logs/agent_history.log
+Summary of Changes:
+  - Created observer_flowchart_bank.dot to implement the Bank Account transaction broadcast flowchart in Graphviz DOT.
+  - Compiled the DOT file to observer_flowchart_bank.png.
+  - Recompiled the LaTeX report to update the PDF with the new DOT flowchart.
+---
 
