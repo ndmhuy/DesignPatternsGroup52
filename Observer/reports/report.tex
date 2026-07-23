@@ -154,6 +154,13 @@ Applying the pattern to our problem:
 \section{Implementation of the Observer Pattern}
 By decoupling the classes through abstract interfaces, our refactored implementation allows adding or removing subscriber systems at runtime without modifying the core subject.
 
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{pattern_code_header.png}
+    \caption{Core Header Definition of the Observer Pattern Interface (\texttt{AccountObserver} and \texttt{BankAccount})}
+    \label{fig:pattern_code_header}
+\end{figure}
+
 \begin{lstlisting}[caption=Refactored Observer Implementation]
 // Refer to Observer/src/pattern.cpp for full implementation details
 class AccountObserver {
