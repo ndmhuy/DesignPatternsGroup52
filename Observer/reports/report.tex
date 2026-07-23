@@ -65,6 +65,13 @@ A customer or administrator must be able to register, enable, or disable these n
 \section{Naive Solution (Without Design Pattern)}
 In a naive implementation, the \texttt{BankAccount} class holds references to concrete notification system objects directly. Below is the C++ representation of this approach:
 
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{naive_code_header.png}
+    \caption{Naive Bank Account Header \& Implementation (\texttt{NaiveBankAccount})}
+    \label{fig:naive_code_header}
+\end{figure}
+
 \begin{lstlisting}[caption=Naive Implementation of Bank Account Notifications]
 // Refer to Observer/src/naive.cpp for full implementation details
 class NaiveBankAccount {
@@ -159,6 +166,13 @@ By decoupling the classes through abstract interfaces, our refactored implementa
     \includegraphics[width=0.9\textwidth]{pattern_code_header.png}
     \caption{Core Header Definition of the Observer Pattern Interface (\texttt{AccountObserver} and \texttt{BankAccount})}
     \label{fig:pattern_code_header}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{concrete_observers_header.png}
+    \caption{Implementation Header of Concrete Observer Subscribers}
+    \label{fig:concrete_observers_header}
 \end{figure}
 
 \begin{lstlisting}[caption=Refactored Observer Implementation]
