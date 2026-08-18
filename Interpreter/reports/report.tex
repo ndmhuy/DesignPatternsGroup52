@@ -1,5 +1,6 @@
 \documentclass[12pt,a4paper]{article}
 \usepackage[utf8]{inputenc}
+\usepackage[utf8]{vietnam}
 \usepackage{graphicx}
 \usepackage{listings}
 \usepackage{xcolor}
@@ -37,7 +38,8 @@
 \lstset{style={mystyle}}
 
 \title{Design Pattern Report: Interpreter Pattern}
-\author{Group 52 \\ Nguyễn Đình Minh Huy (Student ID: 25125083)}
+% \author{Group 52 \\ Nguy\~{\^e}n \DJ\`inh Minh Huy (Student ID: 25125083) \\ Tr\`{\^a}n Gia Huy (Student ID: 25125084)}
+\author{Group 52 \\ Nguyễn Đình Minh Huy (Student ID: 25125083) \\ Trần Gia Huy (Student ID: 25125084)}
 \date{\today}
 
 \begin{document}
@@ -48,7 +50,7 @@
 
 \section{Real-world Problem}
 In many systems, there is a need to evaluate language expressions or logical constraints defined dynamically at runtime. For example, database query parsers, business rule engines, or search filters.
-Consider a logic engine that needs to evaluate Boolean expressions containing variables (e.g., $A$, $B$, $C$) and logical operations (\texttt{AND}, \texttt{OR}, \texttt{NOT}). 
+Consider a logic engine that needs to evaluate Boolean expressions containing variables (e.g., $A$, $B$, $C$) and logical operations (\texttt{AND}, \texttt{OR}, \texttt{NOT}). This can be used in evaluating if-else statements or Boolean satisfiability problem (B-SAT).
 The engine must accept various combinations of expressions dynamically, lookup the values of variables in a configuration context, and return the final truth value.
 
 \section{Naive Solution (Without Design Pattern)}
@@ -74,9 +76,9 @@ public:
 \section{Problems with the Naive Solution}
 The naive string-parsing solution has significant limitations:
 \begin{enumerate}
-    \item \textbf{Inflexibility / Hard to Extend:} Adding new operators (like \texttt{XOR}, \texttt{NAND}, \texttt{IMPLIES}) requires changing the parsing logic inside the monolithic evaluation method.
-    \item \textbf{Complexity of Nested Expressions:} Evaluating complex nested expressions such as \texttt{(A AND B) OR (NOT C AND D)} using string search becomes extremely complex, error-prone, and slow. It requires writing a full custom parsing state machine.
-    \item \textbf{High Coupling:} The syntax structure and evaluation logic are bundled together, violating the Single Responsibility Principle (SRP).
+  \item \textbf{Violate OCP:} When adding a new operation or a terminal expression, we have to change logic of the evaluate or interpret function. This violates Open-Close Principle, which makes the application harder to scale or change the structure.
+  \item \textbf{Complexity of nested expression:} Evaluate a nested expression such as \texttt{(A AND B) OR (NOT C AND D)} with string searching becomes complex, error-prone and slow.
+  \item \textbf{High coupling:} Parsing the syntax and evaluating occurs at the same function. This violates Single Responsibility Principle (SRP).
 \end{enumerate}
 
 \section{Introduction to the Interpreter Pattern}
@@ -139,8 +141,12 @@ public:
 };
 
 class AndExpression : public Expression {
-    std::shared_ptr<Expression> left, right;
+    // std::unique_ptr enforces a strict Abstract Syntax Tree (AST) tree hierarchy,
+    // ensuring exclusive single ownership for each child node.
+    std::unique_ptr<Expression> left, right;
 public:
+    AndExpression(std::unique_ptr<Expression> l, std::unique_ptr<Expression> r)
+        : left(std::move(l)), right(std::move(r)) {}
     bool interpret(const Context& c) override {
         return left->interpret(c) && right->interpret(c);
     }
@@ -170,27 +176,6 @@ public:
     \item \textbf{Localization/Pluralization Parsers:} Processing format strings containing plural conditions (e.g., "1 item" vs. "many items").
     \item \textbf{Formula Evaluators:} Spreadsheet apps or calculator features on mobile apps.
 \end{itemize}
-
-\section{Quiz}
-\begin{enumerate}
-    \item In the Interpreter pattern, what does the Abstract Syntax Tree (AST) represent?
-    \begin{itemize}
-        \item[A)] The database schema.
-        \item[B)] A sentence or expression structured according to the grammar.
-        \item[C)] The sequence of UI views.
-        \item[D)] A memory leak detector.
-    \end{itemize}
-    
-    \item Which of the following is a Terminal expression?
-    \begin{itemize}
-        \item[A)] AndExpression
-        \item[B)] VariableExpression
-        \item[C)] OrExpression
-        \item[D)] NotExpression
-    \end{itemize}
-\end{enumerate}
-
-\textbf{Answer Key:} 1-B, 2-B.
 
 \section{References}
 \begin{itemize}
