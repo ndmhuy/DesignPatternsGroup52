@@ -2,15 +2,17 @@
 \usepackage[T1]{fontenc}
 \usepackage[utf8]{inputenc}
 \usepackage{graphicx}
-\graphicspath{{Observer/reports/}}
+\graphicspath{{./}{Observer/reports/}{reports/}}
 \usepackage{listings}
 \usepackage{xcolor}
 \usepackage{hyperref}
+\usepackage{xurl}   % allow long URLs to break across lines
 \usepackage{geometry}
 \usepackage{amsmath}
 \usepackage{float}
 
 \geometry{margin=1in}
+\setlength{\emergencystretch}{3em}  % avoid overfull lines from long \texttt identifiers
 
 \definecolor{codegreen}{rgb}{0,0.6,0}
 \definecolor{codegray}{rgb}{0.5,0.5,0.5}
@@ -128,7 +130,6 @@ Key concepts:
 \end{itemize}
 
 \section{General Class Diagram}
-% Add instructions to place the UML diagram image here
 In the general Observer pattern structure:
 \begin{itemize}
     \item A \texttt{Subject} maintains a list of references to \texttt{Observer} objects.
@@ -148,7 +149,15 @@ Applying the pattern to our problem:
 \begin{itemize}
     \item \texttt{BankAccount} acts as the ConcreteSubject (or subject coordinator).
     \item \texttt{AccountObserver} acts as the Observer interface.
-    \item \texttt{UIObserver}, \texttt{EmailObserver}, \texttt{LoggerObserver}, \texttt{FraudAIObserver}, \texttt{MobileAppObserver}, and \texttt{AnalyticsObserver} act as the ConcreteObservers.
+    \item The ConcreteObservers each implement \texttt{onTransaction()} and react on their own terms:
+    \begin{itemize}
+        \item \texttt{UIObserver} -- refreshes the on-screen balance.
+        \item \texttt{EmailObserver} -- sends the transaction alert email.
+        \item \texttt{LoggerObserver} -- writes the security audit trail.
+        \item \texttt{FraudAIObserver} -- warns on suspicious amounts.
+        \item \texttt{MobileAppObserver} -- delivers the push notification.
+        \item \texttt{AnalyticsObserver} -- records the business metric.
+    \end{itemize}
 \end{itemize}
 
 \begin{figure}[H]
@@ -180,29 +189,46 @@ By decoupling the classes through abstract interfaces, our refactored implementa
 class AccountObserver {
 public:
     virtual ~AccountObserver() = default;
-    virtual void onTransaction(const std::string& type, double amount, double currentBalance) = 0;
+    virtual void onTransaction(const std::string &type, double amount,
+                               double currentBalance) = 0;
 };
 
 class BankAccount {
-private:
-    double balance;
-    std::vector<std::shared_ptr<AccountObserver>> observers;
-
 public:
-    BankAccount(double initialBalance) : balance(initialBalance) {}
+    BankAccount(double initialBalance = 0.0) : balance_(initialBalance) {}
 
-    void attach(std::shared_ptr<AccountObserver> obs) { observers.push_back(obs); }
-    void detach(std::shared_ptr<AccountObserver> obs) { /* Remove from list */ }
-    void notifyObservers(const std::string& type, double amount) {
-        for (const auto& obs : observers) {
-            obs->onTransaction(type, amount, balance);
+    void attach(std::shared_ptr<AccountObserver> observer) {
+        observers_.push_back(observer);
+    }
+    void detach(std::shared_ptr<AccountObserver> observer) {
+        observers_.erase(
+            std::remove(observers_.begin(), observers_.end(), observer),
+            observers_.end());
+    }
+    void notify(const std::string &type, double amount) {
+        for (auto observer : observers_) {
+            observer->onTransaction(type, amount, balance_);
         }
     }
 
     void deposit(double amount) {
-        balance += amount;
-        notifyObservers("Deposit", amount);
+        balance_ += amount;
+        notify("Deposit", amount);
     }
+    void withdraw(double amount) {
+        if (amount > balance_) {
+            notify("FailedWithdrawal", amount);   // rejected: insufficient funds
+        } else {
+            balance_ -= amount;
+            notify("Withdrawal", amount);
+        }
+    }
+
+    double getBalance() const { return balance_; }
+
+private:
+    double balance_;
+    std::vector<std::shared_ptr<AccountObserver>> observers_;
 };
 \end{lstlisting}
 
@@ -343,6 +369,80 @@ private:
     \label{fig:mario_eventbus_demo}
 \end{figure}
 
+\section{Observer and Interpreter Fusion}
+The \textit{Interpreter} pattern represents a sentence of a language as a tree of expression objects, where every node knows how to solve itself and delegates to its children. This works cleanly while every leaf is a constant: the tree is built once and evaluated once.
+
+The situation changes when a terminal expression is a \textbf{variable} that another process, service, or user can rewrite. Every result computed above that leaf immediately becomes stale, and the tree has no way of knowing. Polling the whole tree for changes is exactly the waste the Observer pattern was designed to eliminate.
+
+By fusing the two patterns:
+\begin{itemize}
+    \item \textbf{The variable node acts as the Subject:} it notifies its subscribers whenever its value is rewritten.
+    \item \textbf{The dependent expressions act as Observers:} on notification, only the affected branch is re-evaluated, leaving the rest of the tree untouched.
+\end{itemize}
+
+\subsection{Case Study: Spreadsheet Formula Cells}
+Consider a spreadsheet in which cell \texttt{A3} holds the formula \texttt{= A1 + A2}. The Interpreter pattern parses that formula into an expression tree, while the Observer pattern keeps the result synchronised: \texttt{A3} subscribes to \texttt{A1} and \texttt{A2}, so rewriting either cell -- by another formula or by the user -- triggers an immediate re-interpretation of \texttt{A3} alone.
+
+\begin{lstlisting}[caption=Observing a Mutable Terminal Expression]
+class Expression {
+public:
+    virtual ~Expression() = default;
+    virtual double solve() const = 0;
+};
+
+class ExpressionObserver {
+public:
+    virtual ~ExpressionObserver() = default;
+    virtual void onValueChanged() = 0;
+};
+
+// A terminal expression that other components may rewrite: the Subject
+class VariableExpression : public Expression {
+public:
+    explicit VariableExpression(double value) : value_(value) {}
+
+    double solve() const override { return value_; }
+
+    void attach(std::weak_ptr<ExpressionObserver> observer) {
+        observers_.push_back(std::move(observer));
+    }
+    void setValue(double value) {
+        value_ = value;
+        notify();
+    }
+
+private:
+    void notify() {
+        // weak_ptr expires with the observer, avoiding the lapsed listener problem
+        for (const auto &weak : observers_) {
+            if (auto observer = weak.lock()) {
+                observer->onValueChanged();
+            }
+        }
+    }
+
+    double value_;
+    std::vector<std::weak_ptr<ExpressionObserver>> observers_;
+};
+
+// Cell A3: holds the parsed tree for "= A1 + A2" and observes both leaves
+class FormulaCell : public ExpressionObserver {
+public:
+    explicit FormulaCell(std::shared_ptr<Expression> formula)
+        : formula_(std::move(formula)), cached_(formula_->solve()) {}
+
+    void onValueChanged() override { cached_ = formula_->solve(); }
+
+    double value() const { return cached_; }
+
+private:
+    std::shared_ptr<Expression> formula_;
+    double cached_;
+};
+\end{lstlisting}
+
+The same fusion drives automated trading rules: the Interpreter parses a user-written condition such as \texttt{price > 100 AND volume > 500}, while the Observer pattern broadcasts market updates that trigger the rule evaluation.
+
 \section{Quiz}
 Here are some interactive questions to review the Observer pattern:
 
@@ -378,14 +478,46 @@ Here are some interactive questions to review the Observer pattern:
         \item[C)] It reduces memory overhead of notifications.
         \item[D)] It prevents subjects from changing their state.
     \end{itemize}
+
+    \item In the \textit{pull} model of the Observer pattern, what does the subject send to its observers?
+    \begin{itemize}
+        \item[A)] All of the changed data, packaged inside the notification.
+        \item[B)] Only the announcement that its state changed; each observer then fetches what it needs through getters.
+        \item[C)] Nothing -- observers poll the subject on a timer instead.
+        \item[D)] A notification to the first registered observer only.
+    \end{itemize}
+
+    \item A \texttt{BankAccount} holds \texttt{std::shared\_ptr} references to its observers, and each observer holds a \texttt{std::shared\_ptr} back to the account. What is the consequence?
+    \begin{itemize}
+        \item[A)] The compiler rejects the program.
+        \item[B)] A reference cycle keeps both objects alive forever (a memory leak); holding one side as a \texttt{weak\_ptr} breaks it.
+        \item[C)] The pointers are silently converted into raw pointers.
+        \item[D)] Observers are notified in reverse registration order.
+    \end{itemize}
+
+    \item An observer calls \texttt{subject->detach(this)} from inside its own callback, while \texttt{notify()} is iterating the observer vector with a range-based \texttt{for} loop. What happens?
+    \begin{itemize}
+        \item[A)] The loop safely skips the detached observer.
+        \item[B)] The compiler inserts a defensive copy of the vector.
+        \item[C)] The program asks the user to confirm the removal.
+        \item[D)] Iterator invalidation and undefined behaviour; the subject should iterate over a copy of the list or defer removals.
+    \end{itemize}
+
+    \item How do the Interpreter and Observer patterns complement each other in a spreadsheet or a rule-based trading engine?
+    \begin{itemize}
+        \item[A)] Interpreter parses the formula or rule into an expression tree, while Observer propagates value changes that trigger its re-evaluation.
+        \item[B)] They cannot be used in the same program.
+        \item[C)] Observer compiles the expression and Interpreter executes the binary.
+        \item[D)] Interpreter releases the memory held by the Observer's subscriber list.
+    \end{itemize}
 \end{enumerate}
 
-\textbf{Answer Key:} 1-C, 2-D, 3-C, 4-B.
+\textbf{Answer Key:} 1-C, 2-D, 3-C, 4-B, 5-B, 6-B, 7-D, 8-A.
 
 \section{References}
 \begin{itemize}
     \item Gamma, E., Helm, R., Johnson, R., \& Vlissides, J. (1994). \textit{Design Patterns: Elements of Reusable Object-Oriented Software}. Addison-Wesley.
-    \item Refactoring.Guru. \textit{Design Patterns: Observer}. https://refactoring.guru/design-patterns/observer
+    \item Refactoring.Guru. \textit{Design Patterns: Observer}. \url{https://refactoring.guru/design-patterns/observer}
 \end{itemize}
 
 \end{document}

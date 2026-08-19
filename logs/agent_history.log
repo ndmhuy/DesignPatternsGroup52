@@ -330,3 +330,21 @@ Summary of Changes:
   - Replaced the text-only slides with built diagrams (service fan-out, publisher/subscriber sketch, 3-step interpreter flow, mini spreadsheet grid).
   - QA: pptx schema/relationship validation passed, geometry re-read from the generated file matches the layout spec, and every text box checked for overflow and off-slide placement (0 issues).
 ---
+[2026-08-19 22:13:16] Branch: main
+Prompt: Assess the current Observer report for anything to update, apply the updates, then push.
+Files Modified:
+  - Observer/reports/report.tex
+  - Observer/reports/report.pdf
+  - .gitignore
+  - logs/agent_history.log
+Summary of Changes:
+  - Quiz expanded from 4 to 8 questions (AGENTS.md requires 5-8), reusing the C++-specific questions from the presentation: pull model, shared_ptr reference cycle, iterator invalidation on detach during notify, and Interpreter+Observer combination. Answer key updated to 1-C, 2-D, 3-C, 4-B, 5-B, 6-B, 7-D, 8-A.
+  - New section "Observer and Interpreter Fusion" with a spreadsheet formula-cell case study (A3 = A1 + A2) and a listing showing a mutable terminal expression as Subject, using std::weak_ptr to avoid the lapsed listener problem; closes the gap against the presentation, which covers the Interpreter pairing.
+  - Refactored code listing corrected to mirror Observer/src/pattern.cpp: notify() instead of notifyObservers(), the real detach() body (std::remove/erase), withdraw(), getBalance(), and the balance_/observers_ member names; removed the "/* Remove from list */" placeholder.
+  - ConcreteObservers list in the bank class-diagram section expanded to name each observer's responsibility.
+  - graphicspath now {./}{Observer/reports/}{reports/} so the report compiles from the repository root, from reports/, or when opened directly in Overleaf/TeXworks.
+  - Added xurl so the Refactoring.Guru URL breaks across lines, wrapped it in \url{} for a clickable link, and set emergencystretch; the report now compiles with no errors, no LaTeX warnings and no overfull boxes.
+  - Removed a stale "% Add instructions to place the UML diagram image here" comment.
+  - .gitignore: ignore Office lock files (~$*).
+  - Recompiled report.pdf (17 pages) with two pdflatex passes.
+---
