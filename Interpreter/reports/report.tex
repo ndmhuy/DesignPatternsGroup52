@@ -1,6 +1,7 @@
 \documentclass[12pt,a4paper]{article}
 \usepackage[utf8]{inputenc}
-\usepackage[utf8]{vietnam}
+\usepackage[T5,T1]{fontenc}
+\usepackage[english]{babel}
 \usepackage{graphicx}
 \usepackage{listings}
 \usepackage{xcolor}
@@ -42,7 +43,7 @@
 \lstset{style={mystyle}}
 
 \title{\textbf{CS202 Design Pattern Report: Interpreter Pattern}\\\large Formal Grammars, Abstract Syntax Trees, and Modern C++ Memory Architectures}
-\author{\textbf{Group 52} \\ Nguyễn Đình Minh Huy (Student ID: 25125083) \\ Trần Gia Huy (Student ID: 25125084)}
+\author{\textbf{Group 52} \\ {\fontencoding{T5}\selectfont Nguyễn Đình Minh Huy} (Student ID: 25125083) \\ {\fontencoding{T5}\selectfont Trần Gia Huy} (Student ID: 25125084)}
 \date{\today}
 
 \begin{document}
@@ -471,8 +472,7 @@ void runPatternDemo() {
 }
 \end{lstlisting}
 
-\subsubsection{Step-by-Step Recursive Trace Table}
-During the post-order depth-first traversal of the AST, the nodes are evaluated in the following sequence:
+Table~\ref{tab:interpreter_execution_trace} summarizes the post-order depth-first traversal and evaluation sequence of the AST nodes:
 
 \begin{table}[htbp]
 \centering
@@ -492,6 +492,7 @@ During the post-order depth-first traversal of the AST, the nodes are evaluated 
 \bottomrule
 \end{tabular}
 \caption{Recursive Post-Order Traversal Trace for AST Evaluation}
+\label{tab:interpreter_execution_trace}
 \end{table}
 
 \newpage
@@ -530,23 +531,17 @@ During the post-order depth-first traversal of the AST, the nodes are evaluated 
 \newpage
 \section{Advanced Architectural Combinations: Observer and Mediator Integration}
 
-In real-world software architectures, design patterns rarely exist in isolation. The Interpreter pattern naturally combines with the **Observer** and **Mediator** patterns to create reactive, event-driven, and highly decoupled systems.
+In real-world software architectures, design patterns rarely exist in isolation. The Interpreter pattern naturally combines with the Observer and Mediator patterns to create reactive, event-driven, and highly decoupled systems.
 
 \subsection{Combining Interpreter with the Observer Pattern: Reactive Logic Evaluation}
-In a static Interpreter implementation, clients must manually invoke \texttt{interpret()} whenever variable values change. In modern reactive architectures (such as reactive UI frameworks, spreadsheet dependency graphs, or IoT sensor triggers), this is refactored by applying the \textbf{Observer Pattern}:
-\begin{itemize}
-    \item \textbf{Reactive Context as Subject:} The \texttt{Context} acts as an observable \textit{Subject}. When a variable's value is modified via \texttt{Context::assign("temperature", 92.5)}, the Context publishes a state-change notification.
-    \item \textbf{AST Roots as Observers:} Root expressions (or dependent UI components) register as \textit{Observers} listening to specific variable keys. Upon receiving an update event, they automatically trigger re-interpretation of their AST and emit new evaluation results reactively.
-    \item \textbf{Benefit:} Eliminates wasteful CPU polling loops and enables push-based reactive logic engines.
-\end{itemize}
+In a static Interpreter implementation, clients must manually invoke \texttt{interpret()} whenever variable values change. In modern reactive architectures—such as reactive UI frameworks, spreadsheet dependency graphs, or IoT sensor triggers—this workflow is refactored by applying the Observer pattern.
+
+The evaluation \texttt{Context} functions as an observable Subject. When a variable's value is modified (for example, via \texttt{Context::assign("temperature", 92.5)}), the Context publishes a state-change notification. Root expressions and dependent components register as Observers listening for specific variable keys. Upon receiving an update event, they automatically trigger re-interpretation of their AST and emit new evaluation results reactively, eliminating wasteful CPU polling loops.
 
 \subsection{Combining Interpreter with the Mediator Pattern: Decoupled Command Coordination}
-In complex distributed or multi-component systems (such as Air Traffic Control towers, CQRS command routers, or chat bot dispatchers), colleagues must coordinate without direct peer-to-peer coupling. Here, the \textbf{Mediator Pattern} leverages an internal \textbf{Interpreter}:
-\begin{itemize}
-    \item \textbf{Decoupled Colleague Interaction:} Colleague components (e.g., flights, sensor nodes, UI widgets) do not know about each other. Instead, they send declarative request/query sentences to a central \texttt{Mediator}.
-    \item \textbf{Mediator as Rule Engine:} The central Mediator embeds an \texttt{Interpreter} engine to dynamically parse incoming command expressions, evaluate business rules, and check permission predicates before routing actions to target colleagues.
-    \item \textbf{Benefit:} Completely decouples the communication topology ($O(N)$ star topology instead of $O(N^2)$ mesh) while retaining full flexibility to dynamically change business coordination rules at runtime.
-\end{itemize}
+In complex distributed systems, such as air traffic control systems, command dispatchers, or workflow engines, components must coordinate without direct peer-to-peer coupling. Here, the Mediator pattern leverages an embedded Interpreter engine.
+
+Colleague components do not interact directly with one another. Instead, they send declarative query or command expressions to a central \texttt{Mediator}. The central Mediator uses an internal Interpreter engine to dynamically parse incoming expressions, evaluate business rules, and check permission predicates before routing actions to target colleagues. This decouples the communication topology into an $O(N)$ star architecture while retaining the flexibility to modify business coordination rules dynamically at runtime.
 
 \section{Conclusion}
 The Interpreter Design Pattern provides an elegant, object-oriented solution for representing and evaluating dynamic domain-specific grammars. By modeling production rules as distinct classes and organizing them into an Abstract Syntax Tree (AST), the pattern achieves strict adherence to the Open-Closed and Single Responsibility Principles. 

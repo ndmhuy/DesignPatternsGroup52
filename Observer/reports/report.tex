@@ -1,6 +1,7 @@
 \documentclass[12pt,a4paper]{article}
 \usepackage[utf8]{inputenc}
-\usepackage[utf8]{vietnam}
+\usepackage[T5,T1]{fontenc}
+\usepackage[english]{babel}
 \usepackage{graphicx}
 \usepackage{listings}
 \usepackage{xcolor}
@@ -42,7 +43,7 @@
 \lstset{style={mystyle}}
 
 \title{\textbf{CS202 Design Pattern Report: Observer Pattern}\\\large Decoupling State Changes, Push vs. Pull Notifications, and C++ Memory Management}
-\author{\textbf{Group 52} \\ Nguyễn Đình Minh Huy (Student ID: 25125083) \\ Trần Gia Huy (Student ID: 25125084)}
+\author{\textbf{Group 52} \\ {\fontencoding{T5}\selectfont Nguyễn Đình Minh Huy} (Student ID: 25125083) \\ {\fontencoding{T5}\selectfont Trần Gia Huy} (Student ID: 25125084)}
 \date{\today}
 
 \begin{document}
@@ -54,7 +55,7 @@
 \section{Real-world Problem \& Motivation}
 
 \subsection{Background: Banking Event Notifications}
-In software development, maintaining consistency between core business entities and dependent logging or notification modules is a common requirement. In a banking system, a \texttt{BankAccount} class manages account state, balance updates, and transaction records.
+In software development, maintaining consistency between core business entities and dependent logging or notification modules is a common requirement. In a simplified banking system, a \texttt{BankAccount} class manages account state, balance updates, and transaction records.
 
 When a customer performs an operation (such as a deposit, withdrawal, or failed overdraft attempt), multiple subsystems need to respond:
 \begin{enumerate}
@@ -70,7 +71,7 @@ When a customer performs an operation (such as a deposit, withdrawal, or failed 
 The objective is to allow the \texttt{BankAccount} class to notify multiple interested services when a transaction occurs without coupling the account logic to specific service implementations. Furthermore, services must be able to subscribe or unsubscribe at runtime without requiring changes to existing classes or recompilation of the core banking logic.
 
 \newpage
-\section{Naive Solution (Without Design Pattern)}
+\section{Naive Solution}
 
 In a basic implementation, the \texttt{BankAccount} class maintains direct member pointers to each concrete service. When a transaction takes place, \texttt{BankAccount} calls specific methods on each service sequentially.
 
@@ -213,15 +214,15 @@ The pattern separates the object that generates events (the \textbf{Subject}) fr
 \subsection{Key Structural Components}
 \begin{itemize}
     \item \textbf{Subject (\texttt{BankAccount}):} Maintains a collection of observer pointers and provides subscription methods:
-    \begin{align*}
-        \text{\texttt{attach(Observer)}} &\quad \text{Registers a new subscriber.} \\
-        \text{\texttt{detach(Observer)}} &\quad \text{Removes a registered subscriber.} \\
-        \text{\texttt{notify(...)}}      &\quad \text{Iterates through subscribers and calls their update method.}
-    \end{align*}
-    \item \textbf{Observer Interface (\texttt{AccountObserver}):} Declares the update interface:
-    \begin{equation*}
-        \text{\texttt{virtual void onTransaction(const std::string\& type, double amount, double balance) = 0;}}
-    \end{equation*}
+    \begin{itemize}
+        \item \texttt{attach(observer)}: Registers a new subscriber.
+        \item \texttt{detach(observer)}: Removes a registered subscriber.
+        \item \texttt{notify(type, amount)}: Iterates through subscribers and calls their update method.
+    \end{itemize}
+    \item \textbf{Observer Interface (\texttt{AccountObserver}):} Declares the abstract update method:
+    \begin{lstlisting}[language=C++]
+virtual void onTransaction(const std::string& type, double amount, double balance) = 0;
+    \end{lstlisting}
     \item \textbf{Concrete Observers (\texttt{UIObserver}, \texttt{EmailObserver}, \texttt{LoggerObserver}, etc.):} Implement the interface to execute their specific response logic.
     \item \textbf{Push vs. Pull Notification Models:}
     \begin{itemize}
@@ -477,7 +478,7 @@ void runPatternDemo() {
 }
 \end{lstlisting}
 
-\subsubsection{Execution Trace Table}
+Table~\ref{tab:observer_execution_trace} summarizes the execution trace and notification delivery across the dynamic lifecycle:
 
 \begin{table}[htbp]
 \centering
@@ -496,6 +497,7 @@ void runPatternDemo() {
 \bottomrule
 \end{tabular}
 \caption{Dynamic Subscription and Event Broadcast Trace}
+\label{tab:observer_execution_trace}
 \end{table}
 
 \newpage
@@ -534,21 +536,17 @@ void runPatternDemo() {
 \newpage
 \section{Interpreter and Mediator Integration}
 
-\subsection{Combining Observer with the Interpreter Pattern}
-The Observer and Interpreter patterns can be combined in rule-processing engines:
-\begin{itemize}
-    \item \textbf{Context as Subject:} In an expression evaluator, the symbol table (\texttt{Context}) serves as an observable Subject.
-    \item \textbf{Expression Trees as Observers:} Root nodes of Abstract Syntax Trees register as observers for specific variable keys.
-    \item \textbf{Automatic Re-Evaluation:} When variable values update in the Context, subscribed syntax trees re-evaluate automatically without requiring polling.
-\end{itemize}
+Software architectures rarely utilize design patterns in isolation. The Observer pattern combines with the Interpreter and Mediator patterns to establish decoupled, event-driven, and reactive application pipelines.
 
-\subsection{Combining Observer with the Mediator Pattern}
-In systems with many interacting components, combining the Observer and Mediator patterns provides an event aggregator structure:
-\begin{itemize}
-    \item \textbf{Central Event Hub:} Components register as observers with a central \texttt{EventMediator} rather than subscribing directly to individual peers.
-    \item \textbf{Decoupled Event Routing:} When a component generates an event, the Mediator routes it to the relevant subscriber components.
-    \item \textbf{Topology Simplification:} Reduces point-to-point connections from $O(N^2)$ to an $O(N)$ star topology while supporting broadcast messaging.
-\end{itemize}
+\subsection{Combining Observer with the Interpreter Pattern: Reactive Rule Evaluation}
+In standard evaluation pipelines, expression trees are evaluated on-demand when explicitly triggered by a caller. Integrating the Observer pattern transforms this model into a push-based reactive rule engine.
+
+In this architecture, the evaluation symbol table (\texttt{Context}) functions as an observable Subject. The root nodes of domain-specific Abstract Syntax Trees (ASTs) register as observers listening for updates to specific variable identifiers. Whenever a variable's value changes within the Context, the Context notifies all dependent expression trees. The trees re-evaluate their logical predicates automatically and trigger downstream actions without requiring polling loops or manual re-invocation.
+
+\subsection{Combining Observer with the Mediator Pattern: Event Hub Architecture}
+In complex systems with multiple interacting components, direct peer-to-peer subscriptions can lead to intricate point-to-point connections. Combining the Observer and Mediator patterns resolves this issue by introducing a centralized Event Aggregator or Event Bus.
+
+Under this model, components do not subscribe directly to each other. Instead, they register as observers with a central \texttt{EventMediator}. When an event occurs, the publishing component sends the event details to the Mediator. The Mediator inspects the event payload, applies routing or filtering policies, and dispatches notifications to the relevant subscriber components. This approach simplifies the communication topology from an $O(N^2)$ mesh to an $O(N)$ star topology while maintaining loose coupling.
 
 \section{Conclusion}
 The Observer Design Pattern provides a structured way to decouple state-holding subjects from dependent notification and logging modules. By using an abstract interface and maintaining dynamic subscriber collections, the pattern supports the Open-Closed and Single Responsibility Principles.
