@@ -518,19 +518,16 @@ Table~\ref{tab:observer_execution_trace} summarizes the execution trace and noti
     \item \textbf{Cascading Updates:} If an observer calls a method on the subject that triggers another notification, it can lead to unintended recursive updates.
 \end{itemize}
 
-\section{Modern Web and Mobile Engineering Applications}
+\section{Applications}
 
-\subsection{Web Development Applications}
-\begin{itemize}
-    \item \textbf{DOM Event Handling:} In JavaScript, \texttt{element.addEventListener('click', callback)} registers callbacks to handle UI events.
-    \item \textbf{State Management Libraries:} In frameworks using Redux, Zustand, or Pinia, view components subscribe to state stores and re-render when state changes.
-    \item \textbf{WebSocket Event Distribution:} In Socket.io and similar protocols, clients subscribe to server channels to receive real-time messages.
-\end{itemize}
+The Observer pattern is widely applied in software engineering whenever loose coupling between state providers and dependent consumers is required:
 
-\subsection{Mobile Development Applications}
 \begin{itemize}
-    \item \textbf{Android Jetpack \texttt{LiveData} and \texttt{StateFlow}:} Views observe data streams emitted by ViewModels and update UI elements when values change.
-    \item \textbf{iOS \texttt{SwiftUI} and Combine:} Views bind to \texttt{@Published} variables in observable models and refresh automatically upon state changes.
+    \item \textbf{Graphical User Interface (GUI) Event Systems:} Modern UI toolkits use the Observer pattern to handle user interactions. UI components (such as buttons, sliders, and text fields) serve as event sources, while event handlers register as observers to process clicks, keystrokes, and focus changes.
+    \item \textbf{Model-View-Controller (MVC) Architectures:} In MVC (and MVVM architectures), the Model acts as the Subject maintaining application state. Multiple Views register as observers with the Model to automatically update and re-render the display whenever the underlying data changes.
+    \item \textbf{Publish-Subscribe and Message-Driven Systems:} Message brokers and event buses implement broadcast distribution where message topics act as subjects and distributed microservices subscribe to receive event payloads asynchronously.
+    \item \textbf{State Management and Reactive Data Streams:} Modern state containers and reactive streams allow UI components or backend workers to subscribe to state stores, triggering downstream updates automatically when state changes occur.
+    \item \textbf{System Monitoring and Logging Services:} Telemetry pipelines, audit loggers, and health check services attach to critical business processes as observers to record events and detect anomalies without altering core transactional logic.
 \end{itemize}
 
 \newpage
@@ -538,12 +535,12 @@ Table~\ref{tab:observer_execution_trace} summarizes the execution trace and noti
 
 Software architectures rarely utilize design patterns in isolation. The Observer pattern combines with the Interpreter and Mediator patterns to establish decoupled, event-driven, and reactive application pipelines.
 
-\subsection{Combining Observer with the Interpreter Pattern: Reactive Rule Evaluation}
+\subsection{Combining Observer with the Interpreter Pattern}
 In standard evaluation pipelines, expression trees are evaluated on-demand when explicitly triggered by a caller. Integrating the Observer pattern transforms this model into a push-based reactive rule engine.
 
 In this architecture, the evaluation symbol table (\texttt{Context}) functions as an observable Subject. The root nodes of domain-specific Abstract Syntax Trees (ASTs) register as observers listening for updates to specific variable identifiers. Whenever a variable's value changes within the Context, the Context notifies all dependent expression trees. The trees re-evaluate their logical predicates automatically and trigger downstream actions without requiring polling loops or manual re-invocation.
 
-\subsection{Combining Observer with the Mediator Pattern: Event Hub Architecture}
+\subsection{Combining Observer with the Mediator Pattern}
 In complex systems with multiple interacting components, direct peer-to-peer subscriptions can lead to intricate point-to-point connections. Combining the Observer and Mediator patterns resolves this issue by introducing a centralized Event Aggregator or Event Bus.
 
 Under this model, components do not subscribe directly to each other. Instead, they register as observers with a central \texttt{EventMediator}. When an event occurs, the publishing component sends the event details to the Mediator. The Mediator inspects the event payload, applies routing or filtering policies, and dispatches notifications to the relevant subscriber components. This approach simplifies the communication topology from an $O(N^2)$ mesh to an $O(N)$ star topology while maintaining loose coupling.

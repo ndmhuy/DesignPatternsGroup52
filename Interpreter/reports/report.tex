@@ -52,9 +52,9 @@
 \tableofcontents
 \newpage
 
-\section{Real-world Problem \& Theoretical Motivation}
+\section{Real-world Problem \& Motivation}
 
-\subsection{Background and Domain-Specific Languages (DSLs)}
+\subsection{Background: Domain-Specific Languages and Boolean Logic}
 In software engineering, systems frequently encounter requirements to interpret, evaluate, or execute statements written in domain-specific mini-languages at runtime. Unlike general-purpose programming languages (e.g., C++, Java, Rust), domain-specific languages (DSLs) are tailored to specialized problem domains. Prominent examples include:
 \begin{itemize}
     \item \textbf{Dynamic Business Rule Engines:} Validating loan eligibility, risk scoring, or discount tiers defined by non-developer business analysts.
@@ -65,7 +65,7 @@ In software engineering, systems frequently encounter requirements to interpret,
 
 Hardcoding every permutation of logical rules into static source code results in severe inflexibility. Every rule change requires recompilation, regression testing, and deployment. Consequently, systems require a mechanism to define, compose, and evaluate arbitrary sentences of a well-defined language dynamically at runtime.
 
-\subsection{Problem Statement: Boolean Logic Evaluator}
+\subsection{Problem Statement}
 To illustrate the problem concretely, consider a configurable logic engine that evaluates Boolean expressions consisting of:
 \begin{enumerate}
     \item \textbf{Variables:} Identifiers representing dynamic state (e.g., $A, B, C$).
@@ -89,7 +89,7 @@ To keep the design clear and practical, the language is defined by simple compos
 By organizing expressions according to these simple rules, any valid logical statement can be translated directly into a hierarchical tree structure.
 
 \newpage
-\section{Naive Solution (Without Design Pattern)}
+\section{Naive Solution}
 
 In a naive C++ implementation, expressions are treated as raw text strings. The evaluation is performed through manual string searching, linear token splitting, or ad-hoc procedural loops.
 
@@ -174,7 +174,7 @@ To illustrate how the naive solution operates, consider evaluating the string \t
 \textbf{Critical Flaw Demonstrated:} The naive evaluator computes $(A \lor B) \land C = (\text{true} \lor \text{false}) \land \text{true} = \text{true}$. If the input were \texttt{"false OR true AND false"}, the mathematically correct precedence $A \lor (B \land C)$ yields $\text{false} \lor (\text{true} \land \text{false}) = \mathbf{false}$, but the naive left-to-right evaluator incorrectly outputs $(\text{false} \lor \text{true}) \land \text{false} = \mathbf{false}$ (or in other expressions, completely corrupts truth values due to lack of precedence and parenthesis support).
 
 \newpage
-\section{In-Depth Analysis of Naive Solution Drawbacks}
+\section{Analysis of Naive Solution Drawbacks}
 
 The naive string-scanning and procedural dispatch approach presents several architectural, correctness, and performance limitations:
 
@@ -234,21 +234,31 @@ The Interpreter pattern defines a polymorphic hierarchy where non-terminal compo
     class/.style={rectangle, draw=black, thick, fill=white, text width=4.6cm, minimum height=1.0cm, font=\footnotesize},
     abstract/.style={class, fill=blue!6}
 ]
-\node[class] (client) {\textbf{Client}\\\rule{4.6cm}{0.3pt}\\+ buildAST()\\+ execute()};
-\node[class, right=1.6cm of client] (context) {\textbf{Context}\\\rule{4.6cm}{0.3pt}\\- stateMap: Map\\+ lookup(key): Value\\+ assign(key, val)};
+% Context on the left, Client on the right
+\node[class] (context) {\textbf{Context}\\\rule{4.6cm}{0.3pt}\\- stateMap: Map\\+ lookup(key): Value\\+ assign(key, val)};
+\node[class, right=1.6cm of context] (client) {\textbf{Client}\\\rule{4.6cm}{0.3pt}\\+ buildAST()\\+ execute()};
+
+% AbstractExpression centered below Client
 \node[abstract, below=1.3cm of client] (abstractExp) {\textbf{\textit{AbstractExpression}}\\\rule{4.6cm}{0.3pt}\\\textit{+ interpret(Context): Result}};
 
+% TerminalExpression (left) and NonterminalExpression (right)
 \node[class, below left=1.3cm and -0.6cm of abstractExp] (terminal) {\textbf{TerminalExpression}\\\rule{4.5cm}{0.3pt}\\- literalData\\+ interpret(Context): Result};
 \node[class, below right=1.3cm and -0.6cm of abstractExp] (nonterminal) {\textbf{NonterminalExpression}\\\rule{4.5cm}{0.3pt}\\- left, right: Expression\\+ interpret(Context): Result};
 
-\draw[->, thick, dashed] (client) -- (abstractExp) node[midway, right, font=\scriptsize] {evaluates};
+% Client relationships
 \draw[->, thick, dashed] (client) -- (context) node[midway, above, font=\scriptsize] {passes};
+\draw[->, thick, dashed] (client) -- (abstractExp) node[midway, right, font=\scriptsize] {evaluates};
 
-% Route terminal queries context cleanly around the perimeter to avoid intersecting AbstractExpression
-\draw[->, thick, dashed] (terminal.west) -- ++(-0.6,0) |- (context.north) node[near end, above, font=\scriptsize] {queries context};
+% Direct, clean queries-context line on the left side
+\draw[->, thick, dashed] (terminal.north) -- (terminal.north |- context.south) node[midway, left, font=\scriptsize] {queries};
 
-\draw[->, thick] (terminal.north) -- ++(0,0.4) -| (abstractExp.south);
-\draw[->, thick] (nonterminal.north) -- ++(0,0.4) -| (abstractExp.south);
+% Inheritance tree to AbstractExpression
+\draw[thick] (terminal.north) -- ++(0,0.5) coordinate (busL);
+\draw[thick] (nonterminal.north) -- ++(0,0.5) coordinate (busR);
+\draw[thick] (busL) -- (busR);
+\draw[->, thick] (busL -| abstractExp.south) -- (abstractExp.south);
+
+% Nonterminal contains child expressions
 \draw[thick] (nonterminal.east) -- ++(0.6,0) |- (abstractExp.east) node[near end, above, font=\scriptsize] {contains child expressions};
 \end{tikzpicture}
 \caption{General GoF Interpreter Pattern UML Structure}
@@ -265,26 +275,33 @@ For our Boolean expression engine, \texttt{BooleanExpression} acts as the abstra
     abstract/.style={class, fill=blue!8},
     opclass/.style={class, fill=orange!8}
 ]
+% Top Center: Abstract BooleanExpression Interface
 \node[abstract] (exp) {\textbf{\textit{BooleanExpression}}\\\rule{4.3cm}{0.3pt}\\\textit{+ interpret(Context const\&): bool}};
 
-\node[class, below left=1.1cm and 0.4cm of exp] (varExp) {\textbf{VariableExpression}\\\rule{4.3cm}{0.3pt}\\- name\_: string\\+ interpret(Context const\&): bool};
-\node[class, below right=1.1cm and 0.4cm of exp] (constExp) {\textbf{ConstantExpression}\\\rule{4.3cm}{0.3pt}\\- value\_: bool\\+ interpret(Context const\&): bool};
+% Middle Row (3 Classes)
+\node[class, below left=1.2cm and 2.6cm of exp] (varExp) {\textbf{VariableExpression}\\\rule{4.3cm}{0.3pt}\\- name\_: string\\+ interpret(Context const\&): bool};
+\node[class, right=0.3cm of varExp] (constExp) {\textbf{ConstantExpression}\\\rule{4.3cm}{0.3pt}\\- value\_: bool\\+ interpret(Context const\&): bool};
+\node[opclass, right=0.3cm of constExp] (andExp) {\textbf{AndExpression}\\\rule{4.3cm}{0.3pt}\\- left\_, right\_: unique\_ptr\\+ interpret(Context const\&): bool};
 
-\node[opclass, below=0.8cm of varExp] (andExp) {\textbf{AndExpression}\\\rule{4.3cm}{0.3pt}\\- left\_, right\_: unique\_ptr\\+ interpret(Context const\&): bool};
-\node[opclass, below=0.8cm of constExp] (orExp) {\textbf{OrExpression}\\\rule{4.3cm}{0.3pt}\\- left\_, right\_: unique\_ptr\\+ interpret(Context const\&): bool};
+% Bottom Row (3 Classes)
+\node[opclass, below=0.6cm of varExp] (orExp) {\textbf{OrExpression}\\\rule{4.3cm}{0.3pt}\\- left\_, right\_: unique\_ptr\\+ interpret(Context const\&): bool};
+\node[opclass, below=0.6cm of constExp] (notExp) {\textbf{NotExpression}\\\rule{4.3cm}{0.3pt}\\- operand\_: unique\_ptr\\+ interpret(Context const\&): bool};
+\node[opclass, below=0.6cm of andExp] (xorExp) {\textbf{XorExpression}\\\rule{4.3cm}{0.3pt}\\- left\_, right\_: unique\_ptr\\+ interpret(Context const\&): bool};
 
-\node[opclass, below=0.5cm of andExp] (notExp) {\textbf{NotExpression}\\\rule{4.3cm}{0.3pt}\\- operand\_: unique\_ptr\\+ interpret(Context const\&): bool};
-\node[opclass, below=0.5cm of orExp] (xorExp) {\textbf{XorExpression}\\\rule{4.3cm}{0.3pt}\\- left\_, right\_: unique\_ptr\\+ interpret(Context const\&): bool};
+% Vertical links from bottom row to middle row
+\draw[thick] (orExp.north) -- (varExp.south);
+\draw[thick] (notExp.north) -- (constExp.south);
+\draw[thick] (xorExp.north) -- (andExp.south);
 
-% Clean orthogonal inheritance lines directly to BooleanExpression
-\draw[->, thick] (varExp.north) -- (varExp.north |- exp.south);
-\draw[->, thick] (constExp.north) -- (constExp.north |- exp.south);
+% Vertical stubs from outer middle classes up to horizontal bus line
+\draw[thick] (varExp.north) -- ++(0, 0.4) coordinate (busLeft);
+\draw[thick] (andExp.north) -- ++(0, 0.4) coordinate (busRight);
 
-\draw[->, thick] (andExp.west) -- ++(-0.4,0) |- (exp.west);
-\draw[->, thick] (notExp.west) -- ++(-0.7,0) |- (exp.west);
+% Horizontal bus line connecting all 3 columns
+\draw[thick] (busLeft) -- (busRight);
 
-\draw[->, thick] (orExp.east) -- ++(0.4,0) |- (exp.east);
-\draw[->, thick] (xorExp.east) -- ++(0.7,0) |- (exp.east);
+% Single unified generalization arrow pointing directly into BooleanExpression.south
+\draw[->, thick] (constExp.north) -- (exp.south);
 \end{tikzpicture}
 \caption{Concrete Boolean Logic Evaluator Class Hierarchy}
 \label{fig:concrete_uml}
@@ -496,7 +513,7 @@ Table~\ref{tab:interpreter_execution_trace} summarizes the post-order depth-firs
 \end{table}
 
 \newpage
-\section{Evaluation of Trade-offs (Pros and Cons)}
+\section{Evaluation of Trade-offs}
 
 \subsection{Advantages}
 \begin{itemize}
@@ -513,32 +530,29 @@ Table~\ref{tab:interpreter_execution_trace} summarizes the post-order depth-firs
     \item \textbf{Grammar Maintenance Overhead:} Modifying operator precedence rules requires structural modifications to the AST assembly rather than simple configuration changes.
 \end{itemize}
 
-\section{Modern Web and Mobile Engineering Applications}
+\section{Applications}
 
-\subsection{Web Development Applications}
-\begin{itemize}
-    \item \textbf{Dynamic URL Routing Engines:} Modern web frameworks (e.g., Express.js, Fastify, React Router) translate parameterized route patterns (e.g., \texttt{/api/v1/users/:id/orders/:orderId}) into regex/AST matchers that extract path parameters from incoming HTTP request strings.
-    \item \textbf{CSS Selector Engines:} Browser engines (e.g., WebKit, Blink) parse complex compound CSS selectors (e.g., \texttt{div.container > article:first-child p.lead}) into selector ASTs to efficiently match DOM nodes during style resolution.
-    \item \textbf{Client-Side Formula Parsers:} Web spreadsheet applications (e.g., Google Sheets, Luckysheet) parse formula expressions (e.g., \texttt{=SUM(A1:A10) * IF(B1 > 50, 1.1, 1.0)}) into syntax trees that re-evaluate reactively upon cell updates.
-\end{itemize}
+The Interpreter pattern is widely applied in software engineering when a system needs to parse, evaluate, or execute domain-specific grammar rules:
 
-\subsection{Mobile Development Applications}
 \begin{itemize}
-    \item \textbf{ICU MessageFormat \& Pluralization Parsers:} Mobile operating systems (iOS and Android) interpret dynamic localization strings containing gender, cardinal numbers, and pluralization branches (e.g., \texttt{"\{count, plural, =0\{No items\} =1\{One item\} other\{\# items\}\}"}).
-    \item \textbf{Server-Driven UI (SDUI) Conditional Rendering:} Applications driven by backend layout schemas interpret JSON condition trees (e.g., \texttt{\{"and": [\{"user.isVip": true\}, \{"device.osVersion": "> 14"\}]\}}) to dynamically show or hide mobile screen widgets.
+    \item \textbf{Domain-Specific Query and Filter Languages:} Database abstraction layers and search systems parse user-defined filter expressions (such as SQL \texttt{WHERE} clauses or custom search query languages) into syntax trees to evaluate records dynamically.
+    \item \textbf{Business Rule and Validation Engines:} Enterprise workflow platforms use domain-specific mini-languages to evaluate eligibility criteria, discount pricing tiers, or risk scores defined by non-programmer domain experts at runtime.
+    \item \textbf{Spreadsheet Formula Evaluation:} Spreadsheet engines parse formula strings (such as mathematical formulas, logical branching, and cell aggregations) into Abstract Syntax Trees that re-evaluate when referenced cell values change.
+    \item \textbf{Template Processing and Formatting Engines:} Document and string template engines interpret dynamic placeholder expressions, conditional blocks, and iterative tags embedded in text or markup.
+    \item \textbf{Command-Line and Script Interpreters:} Interactive console utilities and automation engines parse script commands, parameterized flags, and compound logical pipelines into executable syntax structures.
 \end{itemize}
 
 \newpage
-\section{Advanced Architectural Combinations: Observer and Mediator Integration}
+\section{Observer and Mediator Integration}
 
 In real-world software architectures, design patterns rarely exist in isolation. The Interpreter pattern naturally combines with the Observer and Mediator patterns to create reactive, event-driven, and highly decoupled systems.
 
-\subsection{Combining Interpreter with the Observer Pattern: Reactive Logic Evaluation}
+\subsection{Combining Interpreter with the Observer Pattern}
 In a static Interpreter implementation, clients must manually invoke \texttt{interpret()} whenever variable values change. In modern reactive architectures—such as reactive UI frameworks, spreadsheet dependency graphs, or IoT sensor triggers—this workflow is refactored by applying the Observer pattern.
 
 The evaluation \texttt{Context} functions as an observable Subject. When a variable's value is modified (for example, via \texttt{Context::assign("temperature", 92.5)}), the Context publishes a state-change notification. Root expressions and dependent components register as Observers listening for specific variable keys. Upon receiving an update event, they automatically trigger re-interpretation of their AST and emit new evaluation results reactively, eliminating wasteful CPU polling loops.
 
-\subsection{Combining Interpreter with the Mediator Pattern: Decoupled Command Coordination}
+\subsection{Combining Interpreter with the Mediator Pattern}
 In complex distributed systems, such as air traffic control systems, command dispatchers, or workflow engines, components must coordinate without direct peer-to-peer coupling. Here, the Mediator pattern leverages an embedded Interpreter engine.
 
 Colleague components do not interact directly with one another. Instead, they send declarative query or command expressions to a central \texttt{Mediator}. The central Mediator uses an internal Interpreter engine to dynamically parse incoming expressions, evaluate business rules, and check permission predicates before routing actions to target colleagues. This decouples the communication topology into an $O(N)$ star architecture while retaining the flexibility to modify business coordination rules dynamically at runtime.
