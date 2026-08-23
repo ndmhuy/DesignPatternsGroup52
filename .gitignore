@@ -19,5 +19,8 @@ a.out
 .DS_Store
 Thumbs.db
 
-# Agent folder
+# Microsoft Office lock files
+~$*
+
+# Agent folder & artifacts
 .agents
