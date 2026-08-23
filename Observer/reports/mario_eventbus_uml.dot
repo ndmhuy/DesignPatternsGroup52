@@ -1,0 +1,70 @@
+digraph G {
+    fontname = "Helvetica,Arial,sans-serif"
+    fontsize = 10
+    rankdir = LR
+    nodesep = 0.5
+    ranksep = 0.8
+    
+    node [
+        fontname = "Helvetica,Arial,sans-serif"
+        fontsize = 10
+        shape = plain
+    ]
+    edge [
+        fontname = "Helvetica,Arial,sans-serif"
+        fontsize = 9
+        arrowhead = empty
+    ]
+
+    // Publishers (Left)
+    Player [label=<<table border="0" cellborder="1" cellspacing="0" cellpadding="6" bgcolor="#FFFFFF">
+        <tr><td bgcolor="#FFE0B2"><b>Player</b></td></tr>
+        <tr><td align="left" bgcolor="#FFFFFF">- coins: int<br/>- health: int</td></tr>
+        <tr><td align="left" bgcolor="#FFFFFF">+ collectCoin(amount: int): void<br/>+ takeDamage(): void<br/>+ die(): void</td></tr>
+    </table>>]
+
+    // EventBus Hub & Data Structures (Center)
+    EventBus [label=<<table border="0" cellborder="1" cellspacing="0" cellpadding="6" bgcolor="#FFFFFF">
+        <tr><td bgcolor="#C8E6C9"><b>EventBus</b></td></tr>
+        <tr><td align="left" bgcolor="#FFFFFF">- m_subscribers: Map&lt;EventType, List&lt;Subscription&gt;&gt;</td></tr>
+        <tr><td align="left" bgcolor="#FFFFFF">+ static getInstance(): EventBus&amp;<br/>+ subscribe(type: EventType, cb: Callback): SubId<br/>+ unsubscribe(id: SubId): void<br/>+ publish(event: GameEvent): void</td></tr>
+    </table>>]
+
+    GameEvent [label=<<table border="0" cellborder="1" cellspacing="0" cellpadding="6" bgcolor="#FFFFFF">
+        <tr><td bgcolor="#F5F5F5"><b>«struct»<br/>GameEvent</b></td></tr>
+        <tr><td align="left" bgcolor="#FFFFFF">+ type: EventType<br/>+ data: std::any</td></tr>
+    </table>>]
+
+    EventType [label=<<table border="0" cellborder="1" cellspacing="0" cellpadding="6" bgcolor="#FFFFFF">
+        <tr><td bgcolor="#F5F5F5"><b>«enum»<br/>EventType</b></td></tr>
+        <tr><td align="left" bgcolor="#FFFFFF">CoinCollected<br/>PlayerDied<br/>EnemyDefeated<br/>AchievementUnlocked<br/>...</td></tr>
+    </table>>]
+
+    // Subscribers (Right)
+    StatisticsTracker [label=<<table border="0" cellborder="1" cellspacing="0" cellpadding="6" bgcolor="#FFFFFF">
+        <tr><td bgcolor="#E1BEE7"><b>StatisticsTracker</b></td></tr>
+        <tr><td align="left" bgcolor="#FFFFFF">- m_stats: GameStatistics</td></tr>
+        <tr><td align="left" bgcolor="#FFFFFF">+ init(): void<br/>+ handleEvent(event: GameEvent): void</td></tr>
+    </table>>]
+
+    AchievementManager [label=<<table border="0" cellborder="1" cellspacing="0" cellpadding="6" bgcolor="#FFFFFF">
+        <tr><td bgcolor="#E1BEE7"><b>AchievementManager</b></td></tr>
+        <tr><td align="left" bgcolor="#FFFFFF">- m_achievements: List&lt;Achievement&gt;</td></tr>
+        <tr><td align="left" bgcolor="#FFFFFF">+ init(): void<br/>+ handleEvent(event: GameEvent): void</td></tr>
+    </table>>]
+
+    // Subgraphs for horizontal alignments
+    { rank=same; Player }
+    { rank=same; EventBus; GameEvent; EventType }
+    { rank=same; StatisticsTracker; AchievementManager }
+
+    // Communication links (Associations / Uses)
+    Player -> EventBus [arrowhead=vee, style=dashed, label="publish event ", color="#E65100", fontcolor="#E65100"]
+    
+    StatisticsTracker -> EventBus [arrowhead=vee, style=dashed, label="subscribe ", color="#4A148C", fontcolor="#4A148C"]
+    AchievementManager -> EventBus [arrowhead=vee, style=dashed, label="subscribe ", color="#4A148C", fontcolor="#4A148C"]
+
+    // EventBus dependencies
+    EventBus -> GameEvent [arrowhead=vee, style=solid, color="#2E7D32"]
+    GameEvent -> EventType [arrowhead=vee, style=solid, color="#757575"]
+}

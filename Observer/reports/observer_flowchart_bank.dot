@@ -1,0 +1,50 @@
+digraph G {
+    fontname = "Helvetica,Arial,sans-serif"
+    fontsize = 10
+    rankdir = LR
+    nodesep = 0.2
+    ranksep = 0.8
+    splines = true
+    
+    node [
+        fontname = "Helvetica,Arial,sans-serif"
+        fontsize = 10
+        shape = box
+        style = "filled,rounded"
+        width = 2.2
+        height = 0.6
+        penwidth = 1.5
+    ]
+    
+    edge [
+        fontname = "Helvetica,Arial,sans-serif"
+        fontsize = 9
+        penwidth = 1.2
+    ]
+
+    // Nodes
+    Event [label="Transaction Event\n(e.g., Deposit $250.00)", fillcolor="#FFE0B2", color="#FB8C00"]
+    BankAccount [label="BankAccount\n(Subject)", fillcolor="#C8E6C9", color="#4CAF50"]
+    
+    // Observers (Vertical Stack)
+    UIObserver [label="UIObserver\n(Updates screen)", fillcolor="#E1BEE7", color="#9C27B0"]
+    EmailObserver [label="EmailObserver\n(Sends alert email)", fillcolor="#E1BEE7", color="#9C27B0"]
+    LoggerObserver [label="LoggerObserver\n(Logs audit trail)", fillcolor="#E1BEE7", color="#9C27B0"]
+    FraudAIObserver [label="FraudAIObserver\n(Scans for fraud)", fillcolor="#E1BEE7", color="#9C27B0"]
+    MobileAppObserver [label="MobileAppObserver\n(Sends push alert)", fillcolor="#E1BEE7", color="#9C27B0"]
+    AnalyticsObserver [label="AnalyticsObserver\n(Records metrics)", fillcolor="#E1BEE7", color="#9C27B0"]
+
+    // Flow
+    Event -> BankAccount [label="1. Triggers", color="#E65100", fontcolor="#E65100"]
+    
+    // Broadcast arrows
+    BankAccount -> UIObserver [label="2. notifyObservers()", color="#1B5E20", fontcolor="#1B5E20"]
+    BankAccount -> EmailObserver [color="#1B5E20"]
+    BankAccount -> LoggerObserver [color="#1B5E20"]
+    BankAccount -> FraudAIObserver [color="#1B5E20"]
+    BankAccount -> MobileAppObserver [color="#1B5E20"]
+    BankAccount -> AnalyticsObserver [color="#1B5E20"]
+
+    // Subgraph to keep observers stacked vertically in rank
+    { rank=same; UIObserver; EmailObserver; LoggerObserver; FraudAIObserver; MobileAppObserver; AnalyticsObserver }
+}
