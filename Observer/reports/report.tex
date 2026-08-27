@@ -545,6 +545,62 @@ In complex systems with multiple interacting components, direct peer-to-peer sub
 
 Under this model, components do not subscribe directly to each other. Instead, they register as observers with a central \texttt{EventMediator}. When an event occurs, the publishing component sends the event details to the Mediator. The Mediator inspects the event payload, applies routing or filtering policies, and dispatches notifications to the relevant subscriber components. This approach simplifies the communication topology from an $O(N^2)$ mesh to an $O(N)$ star topology while maintaining loose coupling.
 
+\section{Interactive Quiz}
+
+\begin{enumerate}
+    \item What is the primary intent of the Observer Design Pattern?
+    \begin{itemize}
+        \item[A)] To ensure a class has only one instance and provide a global point of access to it.
+        \item[B)] To define a one-to-many dependency between objects so that when one object changes state, all its dependents are notified automatically.
+        \item[C)] To convert the interface of a class into another interface clients expect.
+        \item[D)] To separate an abstraction from its implementation so that the two can vary independently.
+    \end{itemize}
+
+    \item What constitutes the "Lapsed Listener" problem in object-oriented memory management?
+    \begin{itemize}
+        \item[A)] An observer throwing an uncaught exception during state update.
+        \item[B)] A subject holding strong references to observers that should have been garbage collected or destroyed, causing memory leaks.
+        \item[C)] An observer polling the subject too frequently.
+        \item[D)] Observers being notified in reverse alphabetical order.
+    \end{itemize}
+
+    \item How does the "Push Model" differ from the "Pull Model" in the Observer pattern?
+    \begin{itemize}
+        \item[A)] In the Push model, the subject sends detailed transaction data as arguments to \texttt{update()}; in the Pull model, the subject only sends a minimal notification or pointer and the observer queries the subject for data.
+        \item[B)] The Push model only works over network sockets, whereas the Pull model is local.
+        \item[C)] The Push model requires raw pointers, while the Pull model requires smart pointers.
+        \item[D)] The Push model does not allow multiple observers.
+    \end{itemize}
+
+    \item Which SOLID principle is directly fulfilled when new observer services (e.g., Fraud Detection or SMS alerts) are added without altering or recompiling the \texttt{BankAccount} class?
+    \begin{itemize}
+        \item[A)] Liskov Substitution Principle (LSP)
+        \item[B)] Single Responsibility Principle (SRP)
+        \item[C)] Open-Closed Principle (OCP)
+        \item[D)] Interface Segregation Principle (ISP)
+    \end{itemize}
+
+    \item In modern C++17, how can a Subject safely observe objects without forcing them to stay alive indefinitely or causing dangling pointer dereferences?
+    \begin{itemize}
+        \item[A)] By storing observer references using raw pointers without cleanup.
+        \item[B)] By storing observer references using \texttt{std::weak\_ptr} and converting them to \texttt{std::shared\_ptr} via \texttt{lock()} before notifying.
+        \item[C)] By disabling destructors on concrete observer classes.
+        \item[D)] By making the Subject a static global singleton.
+    \end{itemize}
+
+    \item In MVC/MVVM application architectures, what role does the Model play relative to the Views?
+    \begin{itemize}
+        \item[A)] The Model acts as the Subject, and the Views register as Observers.
+        \item[B)] The Views act as the Subject, and the Model registers as an Observer.
+        \item[C)] Both Model and Views act as independent Mediators.
+        \item[D)] The Controller acts as the Subject, and the Model is the Observer.
+    \end{itemize}
+\end{enumerate}
+
+\subsubsection*{Answer Key}
+\textbf{1-B, 2-B, 3-A, 4-C, 5-B, 6-A.}
+
+\newpage
 \section{Conclusion}
 The Observer Design Pattern provides a structured way to decouple state-holding subjects from dependent notification and logging modules. By using an abstract interface and maintaining dynamic subscriber collections, the pattern supports the Open-Closed and Single Responsibility Principles.
 

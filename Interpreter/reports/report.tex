@@ -557,6 +557,62 @@ In complex distributed systems, such as air traffic control systems, command dis
 
 Colleague components do not interact directly with one another. Instead, they send declarative query or command expressions to a central \texttt{Mediator}. The central Mediator uses an internal Interpreter engine to dynamically parse incoming expressions, evaluate business rules, and check permission predicates before routing actions to target colleagues. This decouples the communication topology into an $O(N)$ star architecture while retaining the flexibility to modify business coordination rules dynamically at runtime.
 
+\section{Interactive Quiz}
+
+\begin{enumerate}
+    \item What is the primary intent of the Interpreter Design Pattern?
+    \begin{itemize}
+        \item[A)] To define a family of algorithms, encapsulate each one, and make them interchangeable.
+        \item[B)] Given a language, define a representation for its grammar along with an interpreter that uses the representation to interpret sentences in the language.
+        \item[C)] To attach additional responsibilities to an object dynamically without subclassing.
+        \item[D)] To ensure a class has only one instance and provide a global access point.
+    \end{itemize}
+
+    \item What is the fundamental difference between a \texttt{TerminalExpression} and a \texttt{NonTerminalExpression}?
+    \begin{itemize}
+        \item[A)] Terminal expressions represent leaf nodes in an AST (e.g., variables, constants) and evaluate directly; NonTerminal expressions represent grammar operators (e.g., AND, OR) containing child sub-expressions.
+        \item[B)] Terminal expressions only run in console terminals.
+        \item[C)] NonTerminal expressions cannot access the \texttt{Context} symbol table.
+        \item[D)] Terminal expressions require multi-threading while NonTerminal expressions are single-threaded.
+    \end{itemize}
+
+    \item What is the primary responsibility of the \texttt{Context} object in an Interpreter implementation?
+    \begin{itemize}
+        \item[A)] To render the GUI window for the user.
+        \item[B)] To store global state, symbol table mappings (e.g., variable identifiers to boolean values), and evaluation environment information outside the syntax tree.
+        \item[C)] To compile the C++ source code into binary machine code.
+        \item[D)] To allocate memory using raw \texttt{malloc} calls.
+    \end{itemize}
+
+    \item In modern C++17, why is \texttt{std::unique\_ptr} the preferred smart pointer for holding child expressions in non-terminal AST nodes?
+    \begin{itemize}
+        \item[A)] Because AST trees exhibit strict single-ownership hierarchy with no sharing between distinct parent nodes, guaranteeing automatic deep deletion with zero reference counting overhead.
+        \item[B)] Because \texttt{std::shared\_ptr} cannot hold abstract polymorphic types.
+        \item[C)] Because \texttt{std::unique\_ptr} automatically compiles expressions to assembly.
+        \item[D)] Because \texttt{std::weak\_ptr} is deprecated in C++17.
+    \end{itemize}
+
+    \item Under which scenario is the Interpreter pattern generally NOT recommended?
+    \begin{itemize}
+        \item[A)] When evaluating simple domain-specific filter queries.
+        \item[B)] When implementing dynamic business rule engines.
+        \item[C)] When parsing complex, large-scale programming language grammars with hundreds of production rules (where Parser Generators like ANTLR or Bison are more maintainable).
+        \item[D)] When parsing boolean logic formulas.
+    \end{itemize}
+
+    \item How does integrating the Observer pattern enhance an Interpreter AST evaluation pipeline?
+    \begin{itemize}
+        \item[A)] It eliminates the need for virtual destructor definitions.
+        \item[B)] The \texttt{Context} acts as an observable Subject that automatically triggers re-evaluation of dependent AST root expressions whenever variable values change.
+        \item[C)] It converts the AST tree into a linear linked list.
+        \item[D)] It enforces alphabetical ordering on terminal variable lookups.
+    \end{itemize}
+\end{enumerate}
+
+\subsubsection*{Answer Key}
+\textbf{1-B, 2-A, 3-B, 4-A, 5-C, 6-B.}
+
+\newpage
 \section{Conclusion}
 The Interpreter Design Pattern provides an elegant, object-oriented solution for representing and evaluating dynamic domain-specific grammars. By modeling production rules as distinct classes and organizing them into an Abstract Syntax Tree (AST), the pattern achieves strict adherence to the Open-Closed and Single Responsibility Principles. 
 
