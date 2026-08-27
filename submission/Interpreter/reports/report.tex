@@ -5,6 +5,7 @@
 \usepackage{graphicx}
 \usepackage{listings}
 \usepackage{xcolor}
+\usepackage{xurl}
 \usepackage{hyperref}
 \usepackage{geometry}
 \usepackage{amsmath}
@@ -14,6 +15,7 @@
 \usetikzlibrary{shapes.geometric, arrows, positioning, trees}
 
 \geometry{margin=1in}
+\setlength{\emergencystretch}{3em}
 
 \definecolor{codegreen}{rgb}{0,0.6,0}
 \definecolor{codegray}{rgb}{0.5,0.5,0.5}
@@ -181,6 +183,7 @@ The naive string-scanning and procedural dispatch approach presents several arch
 \begin{table}[h]
 \centering
 \small
+\resizebox{\linewidth}{!}{
 \begin{tabular}{p{3.8cm} p{5.5cm} p{5.5cm}}
 \toprule
 \textbf{Deficiency Area} & \textbf{Manifestation in Naive Code} & \textbf{Architectural Consequence} \\
@@ -196,6 +199,7 @@ The naive string-scanning and procedural dispatch approach presents several arch
 \textbf{Evaluation Overhead} & String allocations, repeated \texttt{substr()} calls, and linear scans incur additional overhead on repeated evaluations. & Inefficient when expressions are evaluated repeatedly against changing contexts. \\
 \bottomrule
 \end{tabular}
+}
 \caption{Design and Performance Limitations of the Naive Solution}
 \end{table}
 
@@ -230,6 +234,7 @@ The Interpreter pattern defines a polymorphic hierarchy where non-terminal compo
 
 \begin{figure}[htbp]
 \centering
+\resizebox{\linewidth}{!}{
 \begin{tikzpicture}[
     class/.style={rectangle, draw=black, thick, fill=white, text width=4.6cm, minimum height=1.0cm, font=\footnotesize},
     abstract/.style={class, fill=blue!6}
@@ -261,6 +266,7 @@ The Interpreter pattern defines a polymorphic hierarchy where non-terminal compo
 % Nonterminal contains child expressions
 \draw[thick] (nonterminal.east) -- ++(0.6,0) |- (abstractExp.east) node[near end, above, font=\scriptsize] {contains child expressions};
 \end{tikzpicture}
+}
 \caption{General GoF Interpreter Pattern UML Structure}
 \label{fig:general_uml_structure}
 \end{figure}
@@ -494,6 +500,7 @@ Table~\ref{tab:interpreter_execution_trace} summarizes the post-order depth-firs
 \begin{table}[htbp]
 \centering
 \small
+\resizebox{\linewidth}{!}{
 \begin{tabular}{c p{4.2cm} c c p{4.5cm}}
 \toprule
 \textbf{Step} & \textbf{Node Evaluated} & \textbf{Subtree} & \textbf{Value} & \textbf{Explanation / Operation} \\
@@ -508,6 +515,7 @@ Table~\ref{tab:interpreter_execution_trace} summarizes the post-order depth-firs
 8 & \texttt{OrExpression} (Root) & $(A \land \neg B) \lor (C \oplus A)$ & $\mathbf{true}$ & Root Disjunction: $\text{true} \lor \text{false} = \mathbf{true}$. \\
 \bottomrule
 \end{tabular}
+}
 \caption{Recursive Post-Order Traversal Trace for AST Evaluation}
 \label{tab:interpreter_execution_trace}
 \end{table}

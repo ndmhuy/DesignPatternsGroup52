@@ -5,6 +5,7 @@
 \usepackage{graphicx}
 \usepackage{listings}
 \usepackage{xcolor}
+\usepackage{xurl}
 \usepackage{hyperref}
 \usepackage{geometry}
 \usepackage{amsmath}
@@ -14,6 +15,7 @@
 \usetikzlibrary{shapes.geometric, arrows, positioning, trees}
 
 \geometry{margin=1in}
+\setlength{\emergencystretch}{3em}
 
 \definecolor{codegreen}{rgb}{0,0.6,0}
 \definecolor{codegray}{rgb}{0.5,0.5,0.5}
@@ -183,6 +185,7 @@ The naive approach presents several design limitations:
 \begin{table}[h]
 \centering
 \small
+\resizebox{\linewidth}{!}{
 \begin{tabular}{p{4.0cm} p{5.5cm} p{5.5cm}}
 \toprule
 \textbf{Issue} & \textbf{Cause in Code} & \textbf{Effect on System} \\
@@ -198,6 +201,7 @@ The naive approach presents several design limitations:
 \textbf{Testing Overhead} & Testing \texttt{BankAccount} requires instantiating or managing instances of all 6 concrete services. & Increases testing dependencies and makes isolated unit testing more difficult. \\
 \bottomrule
 \end{tabular}
+}
 \caption{Design Issues in the Naive Implementation}
 \end{table}
 
@@ -255,7 +259,7 @@ The general Observer pattern structure connects the \texttt{Subject} to the abst
 
 % Associations
 \draw[thick] (subject.east) -- (observer.west) node[midway, above, font=\scriptsize] {observers: 0..*};
-\draw[->, thick, dashed] (concreteObserver.west) -- (concreteSubject.east) node[midway, above, font=\scriptsize] {queries state};
+\draw[->, thick, dashed] (concreteObserver.west) -- (concreteSubject.east) node[midway, sloped, above=1pt, font=\scriptsize] {queries state};
 \end{tikzpicture}
 \caption{General GoF Observer Pattern UML Structure}
 \label{fig:general_observer_uml}
@@ -483,6 +487,7 @@ Table~\ref{tab:observer_execution_trace} summarizes the execution trace and noti
 \begin{table}[htbp]
 \centering
 \small
+\resizebox{\linewidth}{!}{
 \begin{tabular}{c p{3.2cm} p{3.4cm} p{6.8cm}}
 \toprule
 \textbf{Step} & \textbf{Operation} & \textbf{Active Observers} & \textbf{Dispatched Output} \\
@@ -496,6 +501,7 @@ Table~\ref{tab:observer_execution_trace} summarizes the execution trace and noti
 4 & \texttt{withdraw(200.0)} & UI, Logger, Fraud, Analytics & UI updates balance to $\$1300$; Logger records $\$200$ withdrawal; Fraud AI checks amount; Analytics logs event. Email and Mobile receive no events. \\
 \bottomrule
 \end{tabular}
+}
 \caption{Dynamic Subscription and Event Broadcast Trace}
 \label{tab:observer_execution_trace}
 \end{table}

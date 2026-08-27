@@ -307,7 +307,7 @@ The pattern replaces a chaotic, many-to-many communication mesh with a clean, on
 \label{fig:star_topology}
 \end{figure}
 
-\subsection{Key Structural Participants}
+\subsection{Key Structural Components}
 \begin{itemize}
     \item \textbf{Mediator Interface (\texttt{IATCMediator}):} Declares the protocol for communication with colleague objects (e.g., \texttt{requestLanding()}, \texttt{notifyRunwayClear()}, \texttt{broadcastEmergency()}).
     \item \textbf{Concrete Mediator (\texttt{ATCTower}):} Implements cooperative behavior by coordinating colleagues. It maintains the single source of truth for runway state, landing queues, and priority overrides.
@@ -392,10 +392,11 @@ For our ATC runway coordination engine, \texttt{ATCTower} serves as the central 
 % Association: Flight uses IATCMediator
 \draw[->, thick] (flightBase.west) -- (iMediator.east) node[midway, above, font=\scriptsize] {uses};
 
-% Association: ATCTower manages Flight (routed explicitly)
-\draw[->, thick] (atcTower.east) -- ++(0.8,0) coordinate (M1) 
-    -- (M1 |- {[yshift=-5mm]flightBase.west}) node[midway, left, font=\scriptsize] {manages 0..*} 
-    -- ([yshift=-5mm]flightBase.west);
+% Association: ATCTower manages Flight (routed explicitly, entering Flight's south
+% edge well clear of both the "uses" association and the colleague-inheritance trunk)
+\coordinate (flightManageAnchor) at ([xshift=-1.7cm]flightBase.south);
+\draw[->, thick] (atcTower.east) -- ++(0.8,0) coordinate (M1) |- (flightManageAnchor);
+\node[font=\scriptsize, anchor=east] at ([yshift=2.5cm]M1) {manages 0..*};
 
 % Colleague inheritance: Unified tree via a bus at y=-2.0
 \draw[->, thick] (commFlight.north) -- (flightBase.south);
@@ -652,6 +653,7 @@ The Mediator pattern is widely used in modern software engineering to manage com
     \item \textbf{iOS Coordinator Pattern:} In iOS Swift development, the Coordinator pattern decouples UI ViewControllers from navigation logic. Instead of ViewController A instantiating and pushing ViewController B directly, ViewControllers notify a central \texttt{Coordinator}, which manages navigation transitions and deep linking.
     \item \textbf{GUI Dialog and Form Controllers:} Complex dialog windows (containing text boxes, checkboxes, sliders, and submit buttons) use a Form Mediator. When a user checks a box, the form mediator automatically enables, disables, or validates dependent fields without individual UI widgets referencing each other.
     \item \textbf{Real-Time Chat and Collaboration Gateways:} WebSocket servers function as mediators, managing room subscriptions, message formatting, and routing between active chat clients.
+    \item \textbf{Microservices Orchestration and Saga Coordinators:} In distributed transaction management, an orchestrator service coordinates the sequence of steps across independent microservices (e.g., payment, inventory, shipping) without those services communicating with each other directly. The orchestrator issues commands, tracks completion state, and triggers compensating transactions on failure, centralizing business transaction logic instead of scattering it across a peer-to-peer choreography.
 \end{itemize}
 
 \newpage
