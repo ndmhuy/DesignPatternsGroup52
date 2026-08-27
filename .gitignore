@@ -21,3 +21,6 @@ Thumbs.db
 
 # Microsoft Office lock files
 ~$*
+
+# Rendered doc views (derived, see g-rule-14)
+docs/rendered/
