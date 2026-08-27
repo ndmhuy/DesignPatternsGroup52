@@ -438,6 +438,22 @@ Summary of Changes:
   - Updated AGENTS.md report guidelines to explicitly clarify that Interactive Quizzes belong in the PPTX decks, not in the LaTeX reports.
 Git Fingerprint: ef1ca44 -> cf8cb2a
 ---
+[2026-08-27 15:53:15] Branch: main
+Prompt: Fix overlapping nodes in Figure 2 (Star topology) and other figures, resolve overfull hboxes for long text like declareEmergency(), and replace markdown bolding with LaTeX textbf.
+Files Modified:
+  - Mediator/reports/report.tex
+  - Mediator/reports/report.pdf
+  - Interpreter/reports/report.pdf
+  - Observer/reports/report.pdf
+  - logs/agent_history.log
+Summary of Changes:
+  - Increased node distances (radii) in TikZ diagrams (Figure 1 and Figure 2) to eliminate overlaps.
+  - Added \resizebox{\linewidth}{!} to all TikZ diagrams and large tables in Mediator report to prevent horizontal page overflow.
+  - Rewrote sentences containing long uninterrupted tokens like requestLandingPermission() and declareEmergency() to eliminate overfull \hbox warnings.
+  - Replaced markdown-style bolding (**Event Aggregator**) with correct LaTeX syntax (\textbf{Event Aggregator}).
+  - Verified 0 overfull warnings in pdflatex output and clean compilation for all reports.
+Git Fingerprint: cf8cb2a -> pending commit
+---
 
 
 

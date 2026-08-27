@@ -79,15 +79,16 @@ If aircraft coordinate landing authorization directly with one another without a
 
 \begin{figure}[htbp]
 \centering
+\resizebox{0.75\linewidth}{!}{
 \begin{tikzpicture}[
-    node/.style={circle, draw=black, thick, fill=blue!10, minimum size=1.1cm, font=\footnotesize\bfseries},
+    node/.style={circle, draw=black, thick, fill=blue!10, minimum size=1.3cm, font=\footnotesize\bfseries},
     conn/.style={<->, thick, red!70!black}
 ]
-\node[node] (A) at (90:2.3cm) {VN123};
-\node[node] (B) at (18:2.3cm) {AF456};
-\node[node] (C) at (306:2.3cm) {BA789};
-\node[node] (D) at (234:2.3cm) {FX902};
-\node[node] (E) at (162:2.3cm) {MEDIC1};
+\node[node] (A) at (90:3.5cm) {VN123};
+\node[node] (B) at (18:3.5cm) {AF456};
+\node[node] (C) at (306:3.5cm) {BA789};
+\node[node] (D) at (234:3.5cm) {FX902};
+\node[node] (E) at (162:3.5cm) {MEDIC1};
 
 \draw[conn] (A) -- (B);
 \draw[conn] (A) -- (C);
@@ -103,6 +104,7 @@ If aircraft coordinate landing authorization directly with one another without a
 
 \draw[conn] (D) -- (E);
 \end{tikzpicture}
+}
 \caption{Decentralized Peer-to-Peer Flight Mesh with $O(N^2)$ Inter-Dependencies}
 \label{fig:p2p_mesh}
 \end{figure}
@@ -236,7 +238,7 @@ public:
 Consider 3 aircraft (\texttt{VN123}, \texttt{AF456}, \texttt{BA789}) entering the airspace and contending for landing:
 \begin{enumerate}
     \item \textbf{Manual $N$-Way Mutual Connection:} When \texttt{VN123}, \texttt{AF456}, and \texttt{BA789} enter the airspace, each flight connects to all others, creating $3 \times 2 = 6$ direct pointer references.
-    \item \textbf{Decentralized Consensus Request:} \texttt{VN123} invokes \texttt{requestLandingPermission()}, queries \texttt{AF456} and \texttt{BA789}, finds both in \texttt{IN\_FLIGHT}, and acquires \texttt{ON\_RUNWAY}.
+    \item \textbf{Decentralized Consensus Request:} Flight \texttt{VN123} calls the method \texttt{requestLandingPermission()}, querying \texttt{AF456} and \texttt{BA789}. It finds both in \texttt{IN\_FLIGHT}, thereby acquiring \texttt{ON\_RUNWAY}.
     \item \textbf{Conflict and Rejection:} While \texttt{VN123} is on approach, \texttt{AF456} attempts to land. Its polling loop detects \texttt{VN123->status == ON\_RUNWAY} and is forced into \texttt{HOLDING\_PATTERN}.
     \item \textbf{Ripple Cleanup on Exit:} When \texttt{VN123} touches down and parks at the terminal gate, it must execute an explicit $O(N)$ sweep across all peer vectors to remove its pointer.
 \end{enumerate}
@@ -248,7 +250,7 @@ Even when implemented using standard object-oriented idioms (proper enums, RAII 
 
 \begin{table}[htbp]
 \centering
-\small
+\resizebox{\linewidth}{!}{
 \begin{tabular}{p{4.0cm} p{5.2cm} p{5.2cm}}
 \toprule
 \textbf{Deficiency Area} & \textbf{Manifestation in Naive Code} & \textbf{Architectural Consequence} \\
@@ -261,9 +263,10 @@ Even when implemented using standard object-oriented idioms (proper enums, RAII 
 \addlinespace
 \textbf{State Synchronization and Race Conditions} & Flight states are polled across individual peers without centralized atomic locking. & Concurrent landing attempts can lead to simultaneous runway acquisition or deadlocks. \\
 \addlinespace
-\textbf{Dangling Pointer Vulnerabilities} & If a flight object is destroyed without completing the $N$-way unregistration sweep, remaining flights hold stale pointers. & Dereferencing invalid pointers during peer polling leads to undefined behavior or segmentation faults. \\
+\textbf{Dangling Pointer Hazards} & Flights must execute an explicit $O(N)$ sweep to remove themselves from peers upon landing. & A single missed removal leaves a dangling pointer, causing fatal segmentation faults on the next cycle. \\
 \bottomrule
 \end{tabular}
+}
 \caption{Architectural and Performance Limitations of the Naive Flight Coordination Design}
 \label{tab:naive_drawbacks}
 \end{table}
@@ -280,17 +283,18 @@ The pattern replaces a chaotic, many-to-many communication mesh with a clean, on
 
 \begin{figure}[htbp]
 \centering
+\resizebox{0.75\linewidth}{!}{
 \begin{tikzpicture}[
-    node/.style={circle, draw=black, thick, fill=blue!10, minimum size=1.1cm, font=\footnotesize\bfseries},
-    mediator/.style={rectangle, draw=black, thick, fill=orange!15, minimum width=2.8cm, minimum height=1.1cm, font=\bfseries\small},
+    node/.style={circle, draw=black, thick, fill=blue!10, minimum size=1.3cm, font=\footnotesize\bfseries},
+    mediator/.style={rectangle, draw=black, thick, fill=orange!15, minimum width=3.5cm, minimum height=1.2cm, font=\bfseries\small},
     conn/.style={<->, thick, blue!80!black}
 ]
 \node[mediator] (ATC) at (0,0) {ATCTower (Mediator)};
-\node[node] (A) at (90:2.5cm) {VN123};
-\node[node] (B) at (18:2.5cm) {AF456};
-\node[node] (C) at (306:2.5cm) {BA789};
-\node[node] (D) at (234:2.5cm) {FX902};
-\node[node] (E) at (162:2.5cm) {MEDIC1};
+\node[node] (A) at (90:3.5cm) {VN123};
+\node[node] (B) at (18:3.5cm) {AF456};
+\node[node] (C) at (306:3.5cm) {BA789};
+\node[node] (D) at (234:3.5cm) {FX902};
+\node[node] (E) at (162:3.5cm) {MEDIC1};
 
 \draw[conn] (ATC) -- (A);
 \draw[conn] (ATC) -- (B);
@@ -298,6 +302,7 @@ The pattern replaces a chaotic, many-to-many communication mesh with a clean, on
 \draw[conn] (ATC) -- (D);
 \draw[conn] (ATC) -- (E);
 \end{tikzpicture}
+}
 \caption{Mediator Star Topology ($O(N)$ Links): Colleagues Communicate Solely Through the Central Hub}
 \label{fig:star_topology}
 \end{figure}
@@ -318,6 +323,7 @@ The generic Mediator structure decouples colleague objects from one another by f
 
 \begin{figure}[htbp]
 \centering
+\resizebox{\linewidth}{!}{
 \begin{tikzpicture}[
     class/.style={rectangle, draw=black, thick, fill=white, text width=4.8cm, minimum height=1.1cm, font=\footnotesize},
     abstract/.style={class, fill=blue!6},
@@ -344,6 +350,7 @@ The generic Mediator structure decouples colleague objects from one another by f
 \draw[thick] (concreteMediator.east) -- ++(0.5,0) |- (colleague1.west) node[near start, below, font=\scriptsize] {coordinates};
 \draw[thick] (concreteMediator.east) -- ++(0.5,0) |- (colleague2.west);
 \end{tikzpicture}
+}
 \caption{General GoF Mediator Pattern UML Structure}
 \label{fig:general_mediator_uml}
 \end{figure}
@@ -353,26 +360,27 @@ For our ATC runway coordination engine, \texttt{ATCTower} serves as the central 
 
 \begin{figure}[htbp]
 \centering
+\resizebox{\linewidth}{!}{
 \begin{tikzpicture}[
-    class/.style={rectangle, draw=black, thick, fill=white, text width=4.5cm, font=\scriptsize},
+    class/.style={rectangle, draw=black, thick, fill=white, text width=5cm, font=\scriptsize},
     abstract/.style={class, fill=blue!8},
     medclass/.style={class, fill=orange!8},
     colclass/.style={class, fill=green!6}
 ]
 % Mediator Interface (top-left) and Flight Base Class (top-right)
-\node[abstract] (iMediator) {\textbf{\textit{IATCMediator}}\\\rule{4.5cm}{0.3pt}\\\textit{+ registerFlight(Flight): void}\\\textit{+ requestLanding(Flight*): bool}\\\textit{+ notifyRunwayClear(Flight*): void}\\\textit{+ broadcastEmergency(Flight*, str): void}};
+\node[abstract] (iMediator) {\textbf{\textit{IATCMediator}}\\\rule{5cm}{0.3pt}\\\textit{+ registerFlight(Flight): void}\\\textit{+ requestLanding(Flight*): bool}\\\textit{+ notifyRunwayClear(Flight*): void}\\\textit{+ broadcastEmergency(Flight*, str): void}};
 
-\node[abstract, right=1.6cm of iMediator] (flightBase) {\textbf{\textit{Flight}}\\\rule{4.5cm}{0.3pt}\\- mediator\_: IATCMediator*\\- flightCode\_: string\\+ requestLanding(): bool\\+ land(): void\\+ receiveMessage(from, msg): void};
+\node[abstract, right=1.6cm of iMediator] (flightBase) {\textbf{\textit{Flight}}\\\rule{5cm}{0.3pt}\\- mediator\_: IATCMediator*\\- flightCode\_: string\\+ requestLanding(): bool\\+ land(): void\\+ receiveMessage(from, msg): void};
 
 % Concrete Mediator: ATCTower (bottom-left)
-\node[medclass, below=1.4cm of iMediator] (atcTower) {\textbf{ATCTower}\\\rule{4.5cm}{0.3pt}\\- runwayClear\_: bool\\- currentRunwayUser\_: Flight*\\- landingQueue\_: queue$<$Flight*$>$\\- activeFlights\_: vector$<$shared\_ptr$>$\\+ registerFlight(Flight): void\\+ requestLanding(Flight*): bool\\+ notifyRunwayClear(Flight*): void\\+ broadcastEmergency(Flight*, str): void};
+\node[medclass, below=1.4cm of iMediator] (atcTower) {\textbf{ATCTower}\\\rule{5cm}{0.3pt}\\- runwayClear\_: bool\\- currentRunwayUser\_: Flight*\\- landingQueue\_: queue$<$Flight*$>$\\- activeFlights\_: vector$<$shared\_ptr$>$\\+ registerFlight(Flight): void\\+ requestLanding(Flight*): bool\\+ notifyRunwayClear(Flight*): void\\+ broadcastEmergency(Flight*, str): void};
 
 % Concrete Colleagues (bottom-right column)
-\node[colclass, below=1.2cm of flightBase] (commFlight) {\textbf{CommercialFlight}\\\rule{4.5cm}{0.3pt}\\- passengerCount\_: int\\+ requestLanding(): bool};
+\node[colclass, below=1.2cm of flightBase] (commFlight) {\textbf{CommercialFlight}\\\rule{5cm}{0.3pt}\\- passengerCount\_: int\\+ requestLanding(): bool};
 
-\node[colclass, below=0.5cm of commFlight] (cargoFlight) {\textbf{CargoFlight}\\\rule{4.5cm}{0.3pt}\\- cargoWeightTons\_: double\\+ requestLanding(): bool};
+\node[colclass, below=0.5cm of commFlight] (cargoFlight) {\textbf{CargoFlight}\\\rule{5cm}{0.3pt}\\- cargoWeightTons\_: double\\+ requestLanding(): bool};
 
-\node[colclass, below=0.5cm of cargoFlight] (emergFlight) {\textbf{EmergencyFlight}\\\rule{4.5cm}{0.3pt}\\+ declareEmergency(reason: str): void};
+\node[colclass, below=0.5cm of cargoFlight] (emergFlight) {\textbf{EmergencyFlight}\\\rule{5cm}{0.3pt}\\+ declareEmergency(reason: str): void};
 
 % Inheritance & Association Links
 \draw[->, thick] (atcTower.north) -- (iMediator.south);
@@ -384,6 +392,7 @@ For our ATC runway coordination engine, \texttt{ATCTower} serves as the central 
 \draw[->, thick] (cargoFlight.east) -- ++(0.3,0) |- (flightBase.east);
 \draw[->, thick] (emergFlight.east) -- ++(0.6,0) |- (flightBase.east);
 \end{tikzpicture}
+}
 \caption{Airport Air Traffic Control Mediator Class Hierarchy}
 \label{fig:atc_mediator_uml}
 \end{figure}
@@ -397,7 +406,7 @@ In our C++17 implementation:
     \item \textbf{Ownership Topology:} \texttt{ATCTower} maintains ownership of active airspace participants using \texttt{std::vector<std::shared\_ptr<Flight>>}. Colleague instances store a non-owning raw pointer (\texttt{IATCMediator*}) to the mediator to prevent reference cycles.
     \item \textbf{FIFO Holding Pattern Queue:} When the runway is occupied, arriving flights are pushed to a \texttt{std::queue<Flight*> landingQueue\_}.
     \item \textbf{Automatic Cascade on Vacation:} When the current runway user invokes \texttt{notifyRunwayClear()}, the tower automatically pops the next flight from the queue, grants clearance, and triggers its landing sequence.
-    \item \textbf{Emergency Priority Overrides:} When \texttt{EmergencyFlight} triggers \texttt{declareEmergency()}, standard traffic is alerted and the emergency flight is granted immediate runway access.
+    \item \textbf{Emergency Priority Overrides:} When an \texttt{EmergencyFlight} calls its \texttt{declareEmergency()} method, standard traffic is alerted. The emergency flight is then granted immediate runway access.
 \end{itemize}
 
 \subsection{Source Code Implementation}
@@ -577,6 +586,7 @@ Table~\ref{tab:mediator_execution_trace} summarizes the lifecycle events, runway
 \begin{table}[htbp]
 \centering
 \small
+\resizebox{\linewidth}{!}{
 \begin{tabular}{c p{3.8cm} c p{2.2cm} p{5.0cm}}
 \toprule
 \textbf{Step} & \textbf{Event / Trigger} & \textbf{Runway} & \textbf{Holding Queue} & \textbf{ATC Tower Action / Dispatched Output} \\
@@ -598,6 +608,7 @@ Table~\ref{tab:mediator_execution_trace} summarizes the lifecycle events, runway
 8 & \texttt{MEDIC1} Mayday & OCCUPIED & Standard Halted & Tower broadcasts advisory to all aircraft; \texttt{MEDIC1} lands with immediate priority. \\
 \bottomrule
 \end{tabular}
+}
 \caption{Dynamic Execution and Queue Cascade Trace in the Mediator System}
 \label{tab:mediator_execution_trace}
 \end{table}
@@ -637,7 +648,7 @@ The Mediator pattern is widely used in modern software engineering to manage com
 In production-grade software architectures, the Mediator pattern frequently pairs with the Observer and Interpreter patterns:
 
 \subsection{Combining Mediator with the Observer Pattern (Event Aggregator)}
-While a standard Mediator pattern uses direct method invocations on colleague references, pairing it with the Observer pattern creates an **Event Aggregator / Event Bus**.
+While a standard Mediator pattern uses direct method invocations on colleague references, pairing it with the Observer pattern creates an \textbf{Event Aggregator / Event Bus}.
 
 Colleague components register as observers with a central \texttt{EventMediator}. When an event occurs, the publishing colleague dispatches an event object to the Mediator without holding any reference to subscribers. The Mediator routes the payload to registered subscriber observers based on event types. This combines the unidirectional loose coupling of Observer with the centralized topology of Mediator.
 
