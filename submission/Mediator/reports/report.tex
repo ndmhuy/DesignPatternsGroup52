@@ -333,10 +333,10 @@ The generic Mediator structure decouples colleague objects from one another by f
 \node[abstract] (mediator) at (0, 0) {\textbf{\textit{Mediator}}\\\rule{4.2cm}{0.3pt}\\\textit{+ notify(sender, event): void}};
 \node[abstract] (colleague) at (8, 0) {\textbf{\textit{Colleague}}\\\rule{4.2cm}{0.3pt}\\- mediator: Mediator\\+ setMediator(Mediator): void};
 
-% Bottom row: spread out with absolute positioning
+% Bottom row: spread out with absolute positioning, same Y level
 \node[concrete] (concreteMediator) at (0, -4.5) {\textbf{ConcreteMediator}\\\rule{4.2cm}{0.3pt}\\- colleague1: Colleague1\\- colleague2: Colleague2\\+ notify(sender, event): void};
-\node[concrete] (colleague1) at (8, -4) {\textbf{ConcreteColleague1}\\\rule{4.2cm}{0.3pt}\\+ doAction(): void};
-\node[concrete] (colleague2) at (14, -4) {\textbf{ConcreteColleague2}\\\rule{4.2cm}{0.3pt}\\+ doAction(): void};
+\node[concrete] (colleague1) at (8, -4.5) {\textbf{ConcreteColleague1}\\\rule{4.2cm}{0.3pt}\\+ doAction(): void};
+\node[concrete] (colleague2) at (14, -4.5) {\textbf{ConcreteColleague2}\\\rule{4.2cm}{0.3pt}\\+ doAction(): void};
 
 % Generalization arrows
 \draw[->, thick] (concreteMediator.north) -- (mediator.south);
@@ -347,8 +347,12 @@ The generic Mediator structure decouples colleague objects from one another by f
 
 % Associations
 \draw[thick] (colleague.west) -- (mediator.east) node[midway, above, font=\scriptsize] {mediates 1};
-\draw[thick] (concreteMediator.east) -- ++(1.0,0) |- (colleague1.west) node[near start, below, font=\scriptsize] {coordinates};
-\draw[thick] (concreteMediator.east) -- ++(1.0,0) |- (colleague2.west);
+
+% Coordinate lines from ConcreteMediator to ConcreteColleagues
+% To Colleague1: straight line
+\draw[->, thick] (concreteMediator.east) -- (colleague1.west) node[midway, above, font=\scriptsize] {coordinates};
+% To Colleague2: route under Colleague1 to avoid crossing
+\draw[->, thick] (concreteMediator.south) -- ++(0,-0.6) -| (colleague2.south);
 \end{tikzpicture}
 }
 \caption{General GoF Mediator Pattern UML Structure}
@@ -386,15 +390,17 @@ For our ATC runway coordination engine, \texttt{ATCTower} serves as the central 
 \draw[->, thick] (atcTower.north) -- (iMediator.south);
 
 % Association: Flight uses IATCMediator
-\draw[thick] (flightBase.west) -- (iMediator.east) node[midway, above, font=\scriptsize] {uses};
+\draw[->, thick] (flightBase.west) -- (iMediator.east) node[midway, above, font=\scriptsize] {uses};
 
-% Association: ATCTower manages Flight
-\draw[thick] (atcTower.east) -- ++(1.2,0) |- (flightBase.south east) node[near start, above, font=\scriptsize] {manages 0..*};
+% Association: ATCTower manages Flight (routes through empty space x=3.2)
+\draw[->, thick] (atcTower.east) -- ++(0.6,0) node[above right, font=\scriptsize] {manages 0..*} |- ([yshift=-5mm]flightBase.west);
 
 % Colleague inheritance: all three inherit from Flight
 \draw[->, thick] (commFlight.north) -- (flightBase.south);
-\draw[->, thick] (cargoFlight.west) -- ++(-1.0,0) |- (flightBase.south west);
-\draw[->, thick] (emergFlight.west) -- ++(-1.5,0) |- ([xshift=-3mm]flightBase.south west);
+% Route CargoFlight inheritance through x=5.4
+\draw[->, thick] (cargoFlight.west) -- ++(-1.0,0) |- ([xshift=-1.5cm]flightBase.south);
+% Route EmergencyFlight inheritance through x=4.4
+\draw[->, thick] (emergFlight.west) -- ++(-2.0,0) |- ([xshift=-2.2cm]flightBase.south);
 \end{tikzpicture}
 }
 \caption{Airport Air Traffic Control Mediator Class Hierarchy}

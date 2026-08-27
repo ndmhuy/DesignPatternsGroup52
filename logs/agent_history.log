@@ -489,3 +489,15 @@ Summary of Changes:
   - Updated submission folder with corrected files.
 Git Fingerprint: 4b74200 -> pending commit
 ---
+[2026-08-27 16:13:50] Branch: main
+Prompt: Goal - Fix and review UML diagrams until good.
+Files Modified:
+  - Mediator/reports/report.tex
+  - Mediator/reports/report.pdf
+  - submission/Mediator/reports/
+  - logs/agent_history.log
+Summary of Changes:
+  - Added missing directed arrowheads (`->`) to the `uses` and `manages 0..*` association lines in Figure 4 (ATC Class Hierarchy) to match standard UML convention and clarify directionality.
+  - Recompiled Mediator PDF and updated submission folder.
+Git Fingerprint: 9c71936 -> pending commit
+---
