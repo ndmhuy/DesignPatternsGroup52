@@ -1,23 +1,24 @@
 \documentclass[12pt,a4paper]{article}
-\usepackage[T1]{fontenc}
 \usepackage[utf8]{inputenc}
+\usepackage[T5,T1]{fontenc}
+\usepackage[english]{babel}
 \usepackage{graphicx}
-\graphicspath{{./}{Observer/reports/}{reports/}}
 \usepackage{listings}
 \usepackage{xcolor}
 \usepackage{hyperref}
-\usepackage{xurl}   % allow long URLs to break across lines
 \usepackage{geometry}
 \usepackage{amsmath}
-\usepackage{float}
+\usepackage{amssymb}
+\usepackage{booktabs}
+\usepackage{tikz}
+\usetikzlibrary{shapes.geometric, arrows, positioning, trees}
 
 \geometry{margin=1in}
-\setlength{\emergencystretch}{3em}  % avoid overfull lines from long \texttt identifiers
 
 \definecolor{codegreen}{rgb}{0,0.6,0}
 \definecolor{codegray}{rgb}{0.5,0.5,0.5}
 \definecolor{codepurple}{rgb}{0.58,0,0.82}
-\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+\definecolor{backcolour}{rgb}{0.96,0.96,0.93}
 
 \lstdefinestyle{mystyle}{
     backgroundcolor=\color{backcolour},   
@@ -41,8 +42,8 @@
 
 \lstset{style={mystyle}}
 
-\title{Design Pattern Report: Observer Pattern}
-\author{Group 52 \\ Nguy\~{\^e}n \DJ\`inh Minh Huy (Student ID: 25125083)}
+\title{\textbf{CS202 Design Pattern Report: Observer Pattern}\\\large Decoupling State Changes, Push vs. Pull Notifications, and C++ Memory Management}
+\author{\textbf{Group 52} \\ {\fontencoding{T5}\selectfont Nguyễn Đình Minh Huy} (Student ID: 25125083) \\ {\fontencoding{T5}\selectfont Trần Gia Huy} (Student ID: 25125084)}
 \date{\today}
 
 \begin{document}
@@ -51,148 +52,290 @@
 \tableofcontents
 \newpage
 
-\section{Real-world Problem}
-Consider a modern financial core banking system where transactions are performed on a \texttt{BankAccount}. When a deposit occurs, several peripheral systems need to be notified of the event immediately to execute their processes:
-\begin{itemize}
-    \item \texttt{UI}: Updates the account balance display on the user's screen.
-    \item \texttt{Email System}: Sends a transaction alert email to the customer.
-    \item \texttt{Logger}: Writes transaction details to the security audit trail.
-    \item \texttt{Fraud AI}: Scans transaction metadata to detect suspicious patterns.
-    \item \texttt{Mobile App}: Delivers a push notification to the client's phone.
-    \item \texttt{Analytics}: Records transaction metrics for business intelligence.
-\end{itemize}
+\section{Real-world Problem \& Motivation}
 
-A customer or administrator must be able to register, enable, or disable these notification channels dynamically. The core challenge is establishing a system where a bank account can broadcast transaction updates to an arbitrary and dynamic set of observer systems without knowing their concrete classes or internal notification mechanisms.
+\subsection{Background: Banking Event Notifications}
+In software development, maintaining consistency between core business entities and dependent logging or notification modules is a common requirement. In a simplified banking system, a \texttt{BankAccount} class manages account state, balance updates, and transaction records.
 
-\section{Naive Solution (Without Design Pattern)}
-In a naive implementation, the \texttt{BankAccount} class holds references to concrete notification system objects directly. Below is the C++ representation of this approach:
+When a customer performs an operation (such as a deposit, withdrawal, or failed overdraft attempt), multiple subsystems need to respond:
+\begin{enumerate}
+    \item \textbf{User Interface (UI):} Updates the displayed balance and transaction list.
+    \item \textbf{Email Service:} Sends transaction receipts and security alerts to the user.
+    \item \textbf{Audit Logger:} Writes timestamped audit records for compliance.
+    \item \textbf{Fraud Detection Engine:} Evaluates transaction parameters to identify suspicious activities.
+    \item \textbf{Mobile Push Service:} Sends alert notifications to the user's mobile device.
+    \item \textbf{Analytics Service:} Records transaction data for operational metrics.
+\end{enumerate}
 
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.9\textwidth]{naive_code_header.png}
-    \caption{Naive Bank Account Header \& Implementation (\texttt{NaiveBankAccount})}
-    \label{fig:naive_code_header}
-\end{figure}
+\subsection{Problem Statement}
+The objective is to allow the \texttt{BankAccount} class to notify multiple interested services when a transaction occurs without coupling the account logic to specific service implementations. Furthermore, services must be able to subscribe or unsubscribe at runtime without requiring changes to existing classes or recompilation of the core banking logic.
 
-\begin{lstlisting}[caption=Naive Implementation of Bank Account Notifications]
-// Refer to Observer/src/naive.cpp for full implementation details
-class NaiveBankAccount {
+\newpage
+\section{Naive Solution}
+
+In a basic implementation, the \texttt{BankAccount} class maintains direct member pointers to each concrete service. When a transaction takes place, \texttt{BankAccount} calls specific methods on each service sequentially.
+
+\begin{lstlisting}[caption=Naive Bank Account with Direct Service Coupling (\texttt{naive.cpp})]
+namespace naive {
+
+class UIUpdateService {
+public:
+    void updateUI(double amount, double balance) {
+        std::cout << "[UI] Updated. Transaction: $" << amount << ", Balance: $" << balance << "\n";
+    }
+};
+
+class EmailService {
+public:
+    void sendEmail(const std::string& accNum, double amount) {
+        std::cout << "[Email] Sent receipt for account " << accNum << ". Amount: $" << amount << "\n";
+    }
+};
+
+class LoggerService {
+public:
+    void logTransaction(const std::string& accNum, double amount) {
+        std::cout << "[Logger] Logged transaction for " << accNum << ". Amount: $" << amount << "\n";
+    }
+};
+
+class FraudDetectionService {
+public:
+    void detectFraud(const std::string& accNum, double amount) {
+        std::cout << "[Fraud AI] Checked account " << accNum << " for $" << amount << ". Status: OK.\n";
+    }
+};
+
+class MobileAppService {
+public:
+    void pushNotification(double amount) {
+        std::cout << "[Mobile App] Push alert sent. Amount: $" << amount << "\n";
+    }
+};
+
+class AnalyticsService {
+public:
+    void trackEvent(const std::string& eventType, double amount) {
+        std::cout << "[Analytics] Event '" << eventType << "' logged for $" << amount << "\n";
+    }
+};
+
+// BankAccount directly coupled to concrete service classes
+class BankAccount {
 private:
     double balance;
-    UI ui;
-    EmailSystem email;
-    Logger logger;
-    FraudDetector fraudDetector;
-    MobileApp mobileApp;
-    Analytics analytics;
+    std::string accountNumber;
+    
+    // Direct dependencies on 6 concrete classes
+    UIUpdateService* uiService;
+    EmailService* emailService;
+    LoggerService* loggerService;
+    FraudDetectionService* fraudService;
+    MobileAppService* mobileService;
+    AnalyticsService* analyticsService;
 
 public:
-    NaiveBankAccount(double initialBalance) : balance(initialBalance) {}
+    BankAccount(std::string accNum,
+                UIUpdateService* ui, EmailService* email,
+                LoggerService* logger, FraudDetectionService* fraud,
+                MobileAppService* mobile, AnalyticsService* analytics)
+        : balance(0.0), accountNumber(accNum),
+          uiService(ui), emailService(email), loggerService(logger),
+          fraudService(fraud), mobileService(mobile), analyticsService(analytics) {}
 
     void deposit(double amount) {
         balance += amount;
         
-        // Direct, coupled method invocations on concrete systems
-        ui.update(balance);
-        email.sendEmail(amount);
-        logger.log(amount, balance);
-        fraudDetector.scan(amount);
-        mobileApp.pushNotification(amount);
-        analytics.trackActivity("Deposit", amount);
+        // Explicit dispatch calling each service method directly
+        uiService->updateUI(amount, balance);
+        emailService->sendEmail(accountNumber, amount);
+        loggerService->logTransaction(accountNumber, amount);
+        fraudService->detectFraud(accountNumber, amount);
+        mobileService->pushNotification(amount);
+        analyticsService->trackEvent("deposit", amount);
     }
 };
+
+} // namespace naive
 \end{lstlisting}
 
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.8\textwidth]{naive_console_output.png}
-    \caption{Console Output of the Naive Bank Account Demo (No Observer Pattern)}
-    \label{fig:naive_console_output}
-\end{figure}
-
-\section{Problems with the Naive Solution}
-The naive approach exhibits several major architectural flaws:
+\subsection{Step-by-Step Execution of the Naive Solution}
+To illustrate the behavior of the naive implementation, consider depositing $\$500.00$:
 \begin{enumerate}
-    \item \textbf{Tight Coupling:} The \texttt{NaiveBankAccount} is tightly coupled to concrete classes like \texttt{UI}, \texttt{EmailSystem}, \texttt{Logger}, \texttt{FraudDetector}, \texttt{MobileApp}, and \texttt{Analytics}. It must know their names, structures, and exactly which update method to call on each.
-    \item \textbf{Violation of the Open-Closed Principle (OCP):} If we want to introduce a new system (such as a compliance reporting system or a credit score monitoring engine), we must modify the core \texttt{NaiveBankAccount} class. This requires adding a new member field and updating the notification logic inside the \texttt{deposit} method.
-    \item \textbf{Violation of the Single Responsibility Principle (SRP):} The \texttt{BankAccount} class should focus solely on financial ledger operations (managing the balance and transactions). However, it is also burdened with orchestrating emails, logs, mobile push notifications, and security analysis.
+    \item \textbf{Initialization:} The client instantiates all 6 concrete service objects and passes their pointers to the \texttt{BankAccount} constructor.
+    \item \textbf{State Update:} Invoking \texttt{bankAccount.deposit(500.0)} increments the internal \texttt{balance} attribute by $\$500.00$.
+    \item \textbf{Sequential Dispatch:} The \texttt{deposit()} method executes the following calls:
+    \begin{itemize}
+        \item \texttt{uiService->updateUI(500.0, 500.0)}
+        \item \texttt{emailService->sendEmail("ACC-101", 500.0)}
+        \item \texttt{loggerService->logTransaction("ACC-101", 500.0)}
+        \item \texttt{fraudService->detectFraud("ACC-101", 500.0)}
+        \item \texttt{mobileService->pushNotification(500.0)}
+        \item \texttt{analyticsService->trackEvent("deposit", 500.0)}
+    \end{itemize}
 \end{enumerate}
 
-\section{Introduction to the Observer Pattern}
-The \textbf{Observer Pattern} is a behavioral design pattern that defines a one-to-many dependency between objects. When one object (the \textbf{Subject} or \textbf{Publisher}) changes state, all its dependents (the \textbf{Observers} or \textbf{Subscribers}) are notified and updated automatically.
 
-Key concepts:
+\section{Analysis of Naive Solution Drawbacks}
+
+The naive approach presents several design limitations:
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{p{4.0cm} p{5.5cm} p{5.5cm}}
+\toprule
+\textbf{Issue} & \textbf{Cause in Code} & \textbf{Effect on System} \\
+\midrule
+\textbf{Open-Closed Principle (OCP) Violation} & Adding a service requires modifying the \texttt{BankAccount} member variables, constructor, and \texttt{deposit()} method. & Existing banking code must be altered and retested whenever notification requirements change. \\
+\addlinespace
+\textbf{Single Responsibility Principle (SRP) Violation} & \texttt{BankAccount} manages balance state while also coordinating logging, UI updates, and email dispatching. & Increases class complexity and couples financial logic to external I/O operations. \\
+\addlinespace
+\textbf{Tight Coupling} & \texttt{BankAccount} references concrete classes and depends on their individual method signatures. & Signature changes in service classes require corresponding edits in \texttt{BankAccount}. \\
+\addlinespace
+\textbf{Static Subscriptions} & Service pointers are assigned at construction time. & Services cannot be enabled, disabled, or substituted dynamically during execution. \\
+\addlinespace
+\textbf{Testing Overhead} & Testing \texttt{BankAccount} requires instantiating or managing instances of all 6 concrete services. & Increases testing dependencies and makes isolated unit testing more difficult. \\
+\bottomrule
+\end{tabular}
+\caption{Design Issues in the Naive Implementation}
+\end{table}
+
+\section{Introduction to the Observer Design Pattern}
+
+\subsection{Definition and Intent}
+According to the Gang of Four (GoF), the \textbf{Observer Pattern} is defined as:
+\begin{quote}
+\textit{"Define a one-to-many dependency between objects so that when one object changes state, all its dependents are notified and updated automatically."}
+\end{quote}
+
+The pattern separates the object that generates events (the \textbf{Subject}) from the objects that handle those events (the \textbf{Observers}) by using an abstract interface.
+
+\subsection{Key Structural Components}
 \begin{itemize}
-    \item \textbf{Subject:} Knows its observers and provides an interface to attach or detach them.
-    \item \textbf{Observer:} Defines an updating interface for objects that should be notified.
-    \item \textbf{ConcreteSubject:} Stores state of interest to ConcreteObservers and sends notifications.
-    \item \textbf{ConcreteObserver:} Implements the Observer updating interface to keep its state consistent with the subject.
-\end{itemize}
-
-\section{General Class Diagram}
-In the general Observer pattern structure:
-\begin{itemize}
-    \item A \texttt{Subject} maintains a list of references to \texttt{Observer} objects.
-    \item The \texttt{Subject} exposes interfaces: \texttt{attach(Observer)}, \texttt{detach(Observer)}, and \texttt{notify()}.
-    \item \texttt{Observer} exposes the \texttt{update()} method interface.
-\end{itemize}
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.85\textwidth]{general_observer_uml.png}
-    \caption{General Observer Design Pattern UML Diagram}
-    \label{fig:general_uml}
-\end{figure}
-
-\section{Class Diagram for the Bank Account Problem}
-Applying the pattern to our problem:
-\begin{itemize}
-    \item \texttt{BankAccount} acts as the ConcreteSubject (or subject coordinator).
-    \item \texttt{AccountObserver} acts as the Observer interface.
-    \item The ConcreteObservers each implement \texttt{onTransaction()} and react on their own terms:
+    \item \textbf{Subject (\texttt{BankAccount}):} Maintains a collection of observer pointers and provides subscription methods:
     \begin{itemize}
-        \item \texttt{UIObserver} -- refreshes the on-screen balance.
-        \item \texttt{EmailObserver} -- sends the transaction alert email.
-        \item \texttt{LoggerObserver} -- writes the security audit trail.
-        \item \texttt{FraudAIObserver} -- warns on suspicious amounts.
-        \item \texttt{MobileAppObserver} -- delivers the push notification.
-        \item \texttt{AnalyticsObserver} -- records the business metric.
+        \item \texttt{attach(observer)}: Registers a new subscriber.
+        \item \texttt{detach(observer)}: Removes a registered subscriber.
+        \item \texttt{notify(type, amount)}: Iterates through subscribers and calls their update method.
+    \end{itemize}
+    \item \textbf{Observer Interface (\texttt{AccountObserver}):} Declares the abstract update method:
+    \begin{lstlisting}[language=C++]
+virtual void onTransaction(const std::string& type, double amount, double balance) = 0;
+    \end{lstlisting}
+    \item \textbf{Concrete Observers (\texttt{UIObserver}, \texttt{EmailObserver}, \texttt{LoggerObserver}, etc.):} Implement the interface to execute their specific response logic.
+    \item \textbf{Push vs. Pull Notification Models:}
+    \begin{itemize}
+        \item \textbf{Push Model:} The Subject sends state details (\texttt{type}, \texttt{amount}, \texttt{balance}) directly as method arguments during the notification call.
+        \item \textbf{Pull Model:} The Subject passes a reference to itself, and observers query the specific state attributes they need.
     \end{itemize}
 \end{itemize}
 
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.95\textwidth]{bank_observer_uml.png}
-    \caption{UML Class Diagram for Bank Account Notification System}
-    \label{fig:bank_uml}
+\newpage
+\section{UML Class Diagrams}
+
+\subsection{General GoF Observer Pattern Structure}
+The general Observer pattern structure connects the \texttt{Subject} to the abstract \texttt{Observer} interface rather than concrete subscriber classes.
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[
+    class/.style={rectangle, draw=black, thick, fill=white, text width=5.0cm, minimum height=1.1cm, font=\footnotesize},
+    abstract/.style={class, fill=blue!6}
+]
+\node[abstract] (subject) {\textbf{\textit{Subject}}\\\rule{5.0cm}{0.3pt}\\\textit{+ attach(Observer): void}\\\textit{+ detach(Observer): void}\\\textit{+ notify(): void}};
+\node[abstract, right=2.0cm of subject] (observer) {\textbf{\textit{Observer}}\\\rule{5.0cm}{0.3pt}\\\textit{+ update(): void}};
+
+\node[class, below=1.4cm of subject] (concreteSubject) {\textbf{ConcreteSubject}\\\rule{5.0cm}{0.3pt}\\- state: State\\- observers: List$<$Observer$>$\\+ getState(): State\\+ setState(State): void};
+\node[class, below=1.4cm of observer] (concreteObserver) {\textbf{ConcreteObserver}\\\rule{5.0cm}{0.3pt}\\- observerState: State\\+ update(): void};
+
+% Orthogonal routing
+\draw[->, thick] (concreteSubject.north) -- (subject.south);
+\draw[->, thick] (concreteObserver.north) -- (observer.south);
+
+% Associations
+\draw[thick] (subject.east) -- (observer.west) node[midway, above, font=\scriptsize] {observers: 0..*};
+\draw[->, thick, dashed] (concreteObserver.west) -- (concreteSubject.east) node[midway, above, font=\scriptsize] {queries state};
+\end{tikzpicture}
+\caption{General GoF Observer Pattern UML Structure}
+\label{fig:general_observer_uml}
 \end{figure}
 
-\section{Implementation of the Observer Pattern}
-By decoupling the classes through abstract interfaces, our refactored implementation allows adding or removing subscriber systems at runtime without modifying the core subject.
+\subsection{Bank Account Notification Class Diagram}
+In the bank account system, \texttt{BankAccount} acts as the Subject, storing a collection of \texttt{std::shared\_ptr<AccountObserver>} instances. All 6 concrete notification classes implement the \texttt{AccountObserver} interface.
 
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.9\textwidth]{pattern_code_header.png}
-    \caption{Core Header Definition of the Observer Pattern Interface (\texttt{AccountObserver} and \texttt{BankAccount})}
-    \label{fig:pattern_code_header}
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[
+    class/.style={rectangle, draw=black, thick, fill=white, text width=4.3cm, font=\scriptsize},
+    abstract/.style={class, fill=blue!8},
+    obsclass/.style={class, fill=green!6}
+]
+% Subject (top-left) and Interface (top-right)
+\node[class] (subject) {\textbf{BankAccount}\\\rule{4.3cm}{0.3pt}\\- balance\_: double\\- observers\_: vector$<$shared\_ptr$<$Obs$>$$>$\\+ attach(shared\_ptr$<$Obs$>$): void\\+ detach(shared\_ptr$<$Obs$>$): void\\+ deposit(amount: double): void\\+ withdraw(amount: double): void\\+ notify(type, amount): void};
+
+\node[abstract, right=2.0cm of subject] (observer) {\textbf{\textit{AccountObserver}}\\\rule{4.3cm}{0.3pt}\\\textit{+ onTransaction(type, amount, balance): void}};
+
+% Left Column: UI, Email, Logger (under BankAccount with sufficient vertical separation)
+\node[obsclass, below=1.2cm of subject] (uiObs) {\textbf{UIObserver}\\\rule{4.3cm}{0.3pt}\\+ onTransaction(...): void};
+\node[obsclass, below=0.5cm of uiObs] (emailObs) {\textbf{EmailObserver}\\\rule{4.3cm}{0.3pt}\\+ onTransaction(...): void};
+\node[obsclass, below=0.5cm of emailObs] (loggerObs) {\textbf{LoggerObserver}\\\rule{4.3cm}{0.3pt}\\+ onTransaction(...): void};
+
+% Right Column: FraudAI, MobileApp, Analytics (under AccountObserver)
+\node[obsclass, below=1.2cm of observer] (fraudObs) {\textbf{FraudAIObserver}\\\rule{4.3cm}{0.3pt}\\+ onTransaction(...): void};
+\node[obsclass, below=0.5cm of fraudObs] (mobileObs) {\textbf{MobileAppObserver}\\\rule{4.3cm}{0.3pt}\\+ onTransaction(...): void};
+\node[obsclass, below=0.5cm of mobileObs] (analyticsObs) {\textbf{AnalyticsObserver}\\\rule{4.3cm}{0.3pt}\\+ onTransaction(...): void};
+
+% Subject to Observer Interface aggregation
+\draw[thick] (subject.east) -- (observer.west) node[midway, above, font=\scriptsize] {contains 0..*};
+
+% Clean orthogonal inheritance lines:
+% Right column connects directly to bottom of AccountObserver
+\draw[->, thick] (fraudObs.north) -- (observer.south);
+\draw[->, thick] (mobileObs.east) -- ++(0.4,0) |- (observer.east);
+\draw[->, thick] (analyticsObs.east) -- ++(0.7,0) |- (observer.east);
+
+% Left column connects through clean middle corridor into bottom of AccountObserver
+\draw[->, thick] (uiObs.east) -- ++(0.4,0) |- (observer.south);
+\draw[->, thick] (emailObs.east) -- ++(0.7,0) |- (observer.south);
+\draw[->, thick] (loggerObs.east) -- ++(1.0,0) |- (observer.south);
+\end{tikzpicture}
+\caption{Bank Account Observer Pattern Class Hierarchy}
+\label{fig:concrete_bank_uml}
 \end{figure}
 
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.9\textwidth]{concrete_observers_header.png}
-    \caption{Implementation Header of Concrete Observer Subscribers}
-    \label{fig:concrete_observers_header}
-\end{figure}
+\newpage
+\section{Pattern-Based Implementation in C++17}
 
-\begin{lstlisting}[caption=Refactored Observer Implementation]
-// Refer to Observer/src/pattern.cpp for full implementation details
+\subsection{Memory Management Considerations}
+In C++, managing observer lifetimes requires addressing potential reference issues:
+\begin{itemize}
+    \item \textbf{Raw Pointers:} If an observer is deleted while remaining in the subject's list, subsequent notifications can result in dangling pointer access.
+    \item \textbf{Smart Pointers (\texttt{std::shared\_ptr} and \texttt{std::weak\_ptr}):}
+    \begin{itemize}
+        \item \textbf{\texttt{std::shared\_ptr}:} Keeps the observer instance valid while it is held in the subject's subscription list.
+        \item \textbf{\texttt{std::weak\_ptr}:} Allows the subject to observe whether the subscriber still exists via \texttt{lock()} before invoking callbacks, preventing memory leaks when observers are destroyed externally.
+    \end{itemize}
+\end{itemize}
+
+\subsection{Source Code Implementation}
+
+\begin{lstlisting}[caption=Observer Interface and BankAccount Subject Implementation (\texttt{pattern.cpp})]
+#include <iostream>
+#include <memory>
+#include <vector>
+#include <string>
+#include <algorithm>
+
+// Observer Interface
 class AccountObserver {
 public:
     virtual ~AccountObserver() = default;
-    virtual void onTransaction(const std::string &type, double amount,
+    virtual void onTransaction(const std::string& type, double amount,
                                double currentBalance) = 0;
 };
 
+// Subject Class
 class BankAccount {
 public:
     BankAccount(double initialBalance = 0.0) : balance_(initialBalance) {}
@@ -200,26 +343,33 @@ public:
     void attach(std::shared_ptr<AccountObserver> observer) {
         observers_.push_back(observer);
     }
+
     void detach(std::shared_ptr<AccountObserver> observer) {
         observers_.erase(
             std::remove(observers_.begin(), observers_.end(), observer),
-            observers_.end());
+            observers_.end()
+        );
     }
-    void notify(const std::string &type, double amount) {
-        for (auto observer : observers_) {
+
+    void notify(const std::string& type, double amount) {
+        for (const auto& observer : observers_) {
             observer->onTransaction(type, amount, balance_);
         }
     }
 
     void deposit(double amount) {
         balance_ += amount;
+        std::cout << "[BankAccount] Deposited $" << amount << ". New balance: $" << balance_ << "\n";
         notify("Deposit", amount);
     }
+
     void withdraw(double amount) {
         if (amount > balance_) {
-            notify("FailedWithdrawal", amount);   // rejected: insufficient funds
+            std::cout << "[BankAccount] Rejected: Insufficient funds for withdrawal of $" << amount << "\n";
+            notify("FailedWithdrawal", amount);
         } else {
             balance_ -= amount;
+            std::cout << "[BankAccount] Withdrew $" << amount << ". New balance: $" << balance_ << "\n";
             notify("Withdrawal", amount);
         }
     }
@@ -232,292 +382,183 @@ private:
 };
 \end{lstlisting}
 
-\begin{figure}[H]
-    \centering
-    \begin{minipage}[t]{0.49\textwidth}
-        \centering
-        \includegraphics[width=\textwidth]{pattern_console_output_1.png}
-        \caption{Refactored Demo Output -- Part 1}
-        \label{fig:pattern_console_1}
-    \end{minipage}
-    \hfill
-    \begin{minipage}[t]{0.49\textwidth}
-        \centering
-        \includegraphics[width=\textwidth]{pattern_console_output_2.png}
-        \caption{Refactored Demo Output -- Part 2}
-        \label{fig:pattern_console_2}
-    \end{minipage}
-\end{figure}
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.7\textwidth]{observer_flowchart_1.png}
-    \caption{Sequential Process Flowchart of a Single Observer Notification}
-    \label{fig:observer_flowchart_1}
-\end{figure}
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.85\textwidth]{observer_flowchart_many.png}
-    \caption{Sequential Process Flowchart with Multiple Observers (Pull Model)}
-    \label{fig:observer_flowchart_many}
-\end{figure}
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.95\textwidth]{observer_flowchart_bank.png}
-    \caption{Process Flowchart for Bank Account Notification System (Push Model)}
-    \label{fig:observer_flowchart_bank}
-\end{figure}
-
-\section{Pros and Cons}
-\subsection{Pros}
-\begin{itemize}
-    \item \textbf{Loose Coupling:} The Subject and Observers are loosely coupled. The Subject only knows that the observer implements a specific interface.
-    \item \textbf{Support for Broadcast Communication:} Unlike direct calls, notifications are broadcast automatically to all registered subscribers.
-    \item \textbf{Open-Closed Principle:} We can introduce new concrete observer classes without changing the subject's code.
-\end{itemize}
-
-\subsection{Cons}
-\begin{itemize}
-    \item \textbf{Lapsed Listener Problem:} Observers must be carefully deregistered when destroyed, or they remain in memory and get called, causing undefined behavior or leaks.
-    \item \textbf{Unintended Update Chains:} If observers trigger updates on subjects, it can lead to complex and hard-to-debug cascading updates or infinite loops.
-    \item \textbf{Ordering Concerns:} There is no guarantee in which order the observers will be notified.
-\end{itemize}
-
-\section{Other Real-world Applications}
-\subsection{Web Development}
-\begin{itemize}
-    \item \textbf{Event Handling in JavaScript:} The DOM's \texttt{addEventListener} uses the Observer pattern to attach event handlers to HTML elements.
-    \item \textbf{State Management (Redux/Vuex):} Views subscribe to changes in a global store and re-render automatically when state mutations occur.
-\end{itemize}
-\subsection{Mobile Development}
-\begin{itemize}
-    \item \textbf{RxSwift / RxJava / RxKotlin:} Reactive streams rely heavily on observing data sequences and binding them directly to UI components.
-    \item \textbf{SwiftUI/Android Jetpack Compose:} Declarative UI frameworks use property wrappers like \texttt{@Published} and state flows to push model updates directly to the view.
-\end{itemize}
-
-\section{Observer and Mediator Fusion}
-In complex system architectures, the \textit{Observer} and \textit{Mediator} patterns are frequently fused together to handle coordination and communication between multiple components. 
-
-In a standard Mediator implementation, colleagues must explicitly call the mediator, and the mediator directly invokes actions on other colleagues. By fusing the two patterns:
-\begin{itemize}
-    \item \textbf{Colleagues act as Subjects:} They maintain state and notify registered observers when changes occur, remaining completely unaware of who is listening.
-    \item \textbf{The Mediator acts as an Observer:} It subscribes to the event streams of the Colleagues. When it receives an \texttt{update()} notification, it coordinates and executes the required reaction across other Colleagues.
-\end{itemize}
-This fusion achieves dynamic event-driven routing while preserving loose coupling between Colleagues.
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.9\textwidth]{observer_mediator_uml.png}
-    \caption{UML Class Diagram of the Observer-Mediator Fusion}
-    \label{fig:observer_mediator_uml}
-\end{figure}
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.85\textwidth]{observer_mediator_flowchart.png}
-    \caption{Process Flowchart of Event-Driven Mediation Flow}
-    \label{fig:observer_mediator_flowchart}
-\end{figure}
-
-\subsection{Case Study: Super Mario Game EventBus}
-In game development, handling interactions between numerous entities and systems (e.g., updating UI when a player dies, unlocking achievements when a coin is collected, playing sounds when blocks break) can easily lead to spaghetti code and tight coupling. To solve this, a decentralized event-routing system known as an \textbf{EventBus} is used.
-
-The \texttt{EventBus} acts as a central singleton \textit{Mediator}. Colleagues (such as the \texttt{Player} or \texttt{POWBlock}) publish events to the \texttt{EventBus} without knowing who reacts to them. Other systems (such as the \texttt{StatisticsTracker} or \texttt{AchievementManager}) register as \textit{Observers} to specific event types.
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.9\textwidth]{mario_eventbus_uml.png}
-    \caption{UML Class Diagram for Super Mario Game EventBus System}
-    \label{fig:mario_eventbus_uml}
-\end{figure}
-
-The C++ interface for the game's EventBus is implemented as follows:
-\begin{lstlisting}[language=C++]
-// include/Core/EventBus.hpp
-class EventBus {
+\newpage
+\begin{lstlisting}[caption=Concrete Observer Implementations]
+class UIObserver : public AccountObserver {
 public:
-  using Callback = std::function<void(const GameEvent &)>;
-  using SubscriptionId = size_t;
-
-  // Singleton Instance access
-  static EventBus &getInstance();
-
-  // Event operations (Mediating Hub)
-  SubscriptionId subscribe(EventType type, Callback callback);
-  void unsubscribe(SubscriptionId id);
-  void publish(const GameEvent &event);
-
-private:
-  EventBus() = default;
-  
-  struct Subscription {
-    SubscriptionId id;
-    Callback callback;
-  };
-
-  std::unordered_map<EventType, std::vector<Subscription>> m_subscribers;
-  SubscriptionId m_nextId = 0;
-};
-\end{lstlisting}
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.95\textwidth]{mario_eventbus_demo.png}
-    \caption{Console Output Simulation of EventBus Event-Driven Mediation}
-    \label{fig:mario_eventbus_demo}
-\end{figure}
-
-\section{Observer and Interpreter Fusion}
-The \textit{Interpreter} pattern represents a sentence of a language as a tree of expression objects, where every node knows how to solve itself and delegates to its children. This works cleanly while every leaf is a constant: the tree is built once and evaluated once.
-
-The situation changes when a terminal expression is a \textbf{variable} that another process, service, or user can rewrite. Every result computed above that leaf immediately becomes stale, and the tree has no way of knowing. Polling the whole tree for changes is exactly the waste the Observer pattern was designed to eliminate.
-
-By fusing the two patterns:
-\begin{itemize}
-    \item \textbf{The variable node acts as the Subject:} it notifies its subscribers whenever its value is rewritten.
-    \item \textbf{The dependent expressions act as Observers:} on notification, only the affected branch is re-evaluated, leaving the rest of the tree untouched.
-\end{itemize}
-
-\subsection{Case Study: Spreadsheet Formula Cells}
-Consider a spreadsheet in which cell \texttt{A3} holds the formula \texttt{= A1 + A2}. The Interpreter pattern parses that formula into an expression tree, while the Observer pattern keeps the result synchronised: \texttt{A3} subscribes to \texttt{A1} and \texttt{A2}, so rewriting either cell -- by another formula or by the user -- triggers an immediate re-interpretation of \texttt{A3} alone.
-
-\begin{lstlisting}[caption=Observing a Mutable Terminal Expression]
-class Expression {
-public:
-    virtual ~Expression() = default;
-    virtual double solve() const = 0;
-};
-
-class ExpressionObserver {
-public:
-    virtual ~ExpressionObserver() = default;
-    virtual void onValueChanged() = 0;
-};
-
-// A terminal expression that other components may rewrite: the Subject
-class VariableExpression : public Expression {
-public:
-    explicit VariableExpression(double value) : value_(value) {}
-
-    double solve() const override { return value_; }
-
-    void attach(std::weak_ptr<ExpressionObserver> observer) {
-        observers_.push_back(std::move(observer));
+    void onTransaction(const std::string& type, double amount, double currentBalance) override {
+        (void)type; (void)amount;
+        std::cout << "[UI Observer] Balance display updated to $" << currentBalance << "\n";
     }
-    void setValue(double value) {
-        value_ = value;
-        notify();
-    }
+};
 
-private:
-    void notify() {
-        // weak_ptr expires with the observer, avoiding the lapsed listener problem
-        for (const auto &weak : observers_) {
-            if (auto observer = weak.lock()) {
-                observer->onValueChanged();
-            }
+class EmailObserver : public AccountObserver {
+public:
+    void onTransaction(const std::string& type, double amount, double currentBalance) override {
+        (void)currentBalance;
+        if (type == "Deposit") {
+            std::cout << "[Email Observer] Alert sent: A deposit of $" << amount << " was made.\n";
+        } else if (type == "Withdrawal") {
+            std::cout << "[Email Observer] Alert sent: A withdrawal of $" << amount << " was made.\n";
+        } else if (type == "FailedWithdrawal") {
+            std::cout << "[Email Observer] Security Alert: Withdrawal of $" << amount << " failed (Insufficient funds).\n";
         }
     }
-
-    double value_;
-    std::vector<std::weak_ptr<ExpressionObserver>> observers_;
 };
 
-// Cell A3: holds the parsed tree for "= A1 + A2" and observes both leaves
-class FormulaCell : public ExpressionObserver {
+class LoggerObserver : public AccountObserver {
 public:
-    explicit FormulaCell(std::shared_ptr<Expression> formula)
-        : formula_(std::move(formula)), cached_(formula_->solve()) {}
+    void onTransaction(const std::string& type, double amount, double currentBalance) override {
+        std::cout << "[Logger Observer] Transaction logged: " << type 
+                  << " of $" << amount << ", new balance: $" << currentBalance << "\n";
+    }
+};
 
-    void onValueChanged() override { cached_ = formula_->solve(); }
+class FraudAIObserver : public AccountObserver {
+public:
+    void onTransaction(const std::string& type, double amount, double currentBalance) override {
+        (void)currentBalance;
+        if (amount > 10000.0) {
+            std::cout << "[Fraud AI] WARNING: Suspicious activity detected: " << type << " of $" << amount << "\n";
+        } else {
+            std::cout << "[Fraud AI] Scan complete: " << type << " of $" << amount << " marked OK.\n";
+        }
+    }
+};
 
-    double value() const { return cached_; }
+class MobileAppObserver : public AccountObserver {
+public:
+    void onTransaction(const std::string& type, double amount, double currentBalance) override {
+        (void)currentBalance;
+        std::cout << "[Mobile App] Push notification: " << type << " of $" << amount << " processed.\n";
+    }
+};
 
-private:
-    std::shared_ptr<Expression> formula_;
-    double cached_;
+class AnalyticsObserver : public AccountObserver {
+public:
+    void onTransaction(const std::string& type, double amount, double currentBalance) override {
+        (void)currentBalance;
+        std::cout << "[Analytics Observer] Event registered: Type=" << type << ", Volume=$" << amount << "\n";
+    }
 };
 \end{lstlisting}
 
-The same fusion drives automated trading rules: the Interpreter parses a user-written condition such as \texttt{price > 100 AND volume > 500}, while the Observer pattern broadcasts market updates that trigger the rule evaluation.
+\newpage
+\subsection{Execution Walkthrough \& Dynamic Subscription Demo}
 
-\section{Quiz}
-Here are some interactive questions to review the Observer pattern:
+The execution driver demonstrates attaching all 6 observers, running a deposit, detaching the Email and Mobile App observers at runtime, and verifying the subsequent withdrawal output.
 
-\begin{enumerate}
-    \item What type of design pattern is the Observer Pattern?
-    \begin{itemize}
-        \item[A)] Creational
-        \item[B)] Structural
-        \item[C)] Behavioral
-        \item[D)] Architectural
-    \end{itemize}
-    
-    \item Which SOLID principle does the Observer pattern primarily help satisfy when adding new subscribers?
-    \begin{itemize}
-        \item[A)] Liskov Substitution Principle
-        \item[B)] Single Responsibility Principle
-        \item[C)] Interface Segregation Principle
-        \item[D)] Open-Closed Principle
-    \end{itemize}
+\begin{lstlisting}[caption=Observer Pattern Execution Demo (\texttt{runPatternDemo})]
+void runPatternDemo() {
+    BankAccount account(1000.0);
 
-    \item What is the ``Lapsed Listener'' problem in the Observer pattern?
-    \begin{itemize}
-        \item[A)] The subject stops listening to updates.
-        \item[B)] Observers are not notified because the subject crashed.
-        \item[C)] An observer is deleted without unsubscribing, causing memory leaks/crashes.
-        \item[D)] Multiple subjects occupy the same listener list.
-    \end{itemize}
+    auto ui = std::make_shared<UIObserver>();
+    auto email = std::make_shared<EmailObserver>();
+    auto logger = std::make_shared<LoggerObserver>();
+    auto fraud = std::make_shared<FraudAIObserver>();
+    auto mobile = std::make_shared<MobileAppObserver>();
+    auto analytics = std::make_shared<AnalyticsObserver>();
 
-    \item Which of the following is a key advantage of the Observer pattern?
-    \begin{itemize}
-        \item[A)] It ensures observers are updated sequentially.
-        \item[B)] It decouples the subject from concrete observer details.
-        \item[C)] It reduces memory overhead of notifications.
-        \item[D)] It prevents subjects from changing their state.
-    \end{itemize}
+    // 1. Attach all 6 observers
+    account.attach(ui); account.attach(email); account.attach(logger);
+    account.attach(fraud); account.attach(mobile); account.attach(analytics);
 
-    \item In the \textit{pull} model of the Observer pattern, what does the subject send to its observers?
-    \begin{itemize}
-        \item[A)] All of the changed data, packaged inside the notification.
-        \item[B)] Only the announcement that its state changed; each observer then fetches what it needs through getters.
-        \item[C)] Nothing -- observers poll the subject on a timer instead.
-        \item[D)] A notification to the first registered observer only.
-    \end{itemize}
+    // 2. Perform Deposit
+    std::cout << "\n--- TEST 1: Deposit $500.00 (All 6 Observers Active) ---\n";
+    account.deposit(500.0);
 
-    \item A \texttt{BankAccount} holds \texttt{std::shared\_ptr} references to its observers, and each observer holds a \texttt{std::shared\_ptr} back to the account. What is the consequence?
-    \begin{itemize}
-        \item[A)] The compiler rejects the program.
-        \item[B)] A reference cycle keeps both objects alive forever (a memory leak); holding one side as a \texttt{weak\_ptr} breaks it.
-        \item[C)] The pointers are silently converted into raw pointers.
-        \item[D)] Observers are notified in reverse registration order.
-    \end{itemize}
+    // 3. Dynamic Detachment
+    std::cout << "\n--- TEST 2: Detaching Email & Mobile Observers ---\n";
+    account.detach(email);
+    account.detach(mobile);
 
-    \item An observer calls \texttt{subject->detach(this)} from inside its own callback, while \texttt{notify()} is iterating the observer vector with a range-based \texttt{for} loop. What happens?
-    \begin{itemize}
-        \item[A)] The loop safely skips the detached observer.
-        \item[B)] The compiler inserts a defensive copy of the vector.
-        \item[C)] The program asks the user to confirm the removal.
-        \item[D)] Iterator invalidation and undefined behaviour; the subject should iterate over a copy of the list or defer removals.
-    \end{itemize}
+    // 4. Perform Subsequent Withdrawal
+    std::cout << "\n--- TEST 3: Withdrawal $200.00 (Email & Mobile Inactive) ---\n";
+    account.withdraw(200.0);
+}
+\end{lstlisting}
 
-    \item How do the Interpreter and Observer patterns complement each other in a spreadsheet or a rule-based trading engine?
-    \begin{itemize}
-        \item[A)] Interpreter parses the formula or rule into an expression tree, while Observer propagates value changes that trigger its re-evaluation.
-        \item[B)] They cannot be used in the same program.
-        \item[C)] Observer compiles the expression and Interpreter executes the binary.
-        \item[D)] Interpreter releases the memory held by the Observer's subscriber list.
-    \end{itemize}
-\end{enumerate}
+Table~\ref{tab:observer_execution_trace} summarizes the execution trace and notification delivery across the dynamic lifecycle:
 
-\textbf{Answer Key:} 1-C, 2-D, 3-C, 4-B, 5-B, 6-B, 7-D, 8-A.
+\begin{table}[htbp]
+\centering
+\small
+\begin{tabular}{c p{3.2cm} p{3.4cm} p{6.8cm}}
+\toprule
+\textbf{Step} & \textbf{Operation} & \textbf{Active Observers} & \textbf{Dispatched Output} \\
+\midrule
+1 & Init (\texttt{Bal=\$1000}) & UI, Email, Logger, Fraud, Mobile, Analytics & Initial state initialized with 6 subscribers attached. \\
+\addlinespace
+2 & \texttt{deposit(500.0)} & All 6 Observers & UI updates balance to $\$1500$; Email sends receipt; Logger records entry; Fraud AI checks amount; Mobile sends alert; Analytics logs event. \\
+\addlinespace
+3 & \texttt{detach(email, mobile)} & UI, Logger, Fraud, Analytics & Email and Mobile App observers removed from list. \\
+\addlinespace
+4 & \texttt{withdraw(200.0)} & UI, Logger, Fraud, Analytics & UI updates balance to $\$1300$; Logger records $\$200$ withdrawal; Fraud AI checks amount; Analytics logs event. Email and Mobile receive no events. \\
+\bottomrule
+\end{tabular}
+\caption{Dynamic Subscription and Event Broadcast Trace}
+\label{tab:observer_execution_trace}
+\end{table}
 
-\section{References}
+\newpage
+\section{Evaluation of Trade-offs}
+
+\subsection{Advantages}
+\begin{itemize}
+    \item \textbf{Open-Closed Principle (OCP):} New observer classes (such as tax calculators or external reporting tools) can be added without modifying \texttt{BankAccount}.
+    \item \textbf{Loose Coupling:} \texttt{BankAccount} depends only on the abstract \texttt{AccountObserver} interface, separating transaction logic from output mechanisms.
+    \item \textbf{Runtime Configuration:} Observers can attach or detach dynamically based on application requirements.
+    \item \textbf{Broadcast Distribution:} A single state update automatically notifies all registered observers.
+\end{itemize}
+
+\subsection{Disadvantages and Limitations}
+\begin{itemize}
+    \item \textbf{Lapsed Listener Issues:} If observers are destroyed without detaching, the subject may retain inactive references, causing resource leaks or undefined behavior when raw pointers are used.
+    \item \textbf{Unordered Notification:} Observers are invoked in list order, so individual observers must not assume specific execution ordering relative to other observers.
+    \item \textbf{Cascading Updates:} If an observer calls a method on the subject that triggers another notification, it can lead to unintended recursive updates.
+\end{itemize}
+
+\section{Applications}
+
+The Observer pattern is widely applied in software engineering whenever loose coupling between state providers and dependent consumers is required:
+
+\begin{itemize}
+    \item \textbf{Graphical User Interface (GUI) Event Systems:} Modern UI toolkits use the Observer pattern to handle user interactions. UI components (such as buttons, sliders, and text fields) serve as event sources, while event handlers register as observers to process clicks, keystrokes, and focus changes.
+    \item \textbf{Model-View-Controller (MVC) Architectures:} In MVC (and MVVM architectures), the Model acts as the Subject maintaining application state. Multiple Views register as observers with the Model to automatically update and re-render the display whenever the underlying data changes.
+    \item \textbf{Publish-Subscribe and Message-Driven Systems:} Message brokers and event buses implement broadcast distribution where message topics act as subjects and distributed microservices subscribe to receive event payloads asynchronously.
+    \item \textbf{State Management and Reactive Data Streams:} Modern state containers and reactive streams allow UI components or backend workers to subscribe to state stores, triggering downstream updates automatically when state changes occur.
+    \item \textbf{System Monitoring and Logging Services:} Telemetry pipelines, audit loggers, and health check services attach to critical business processes as observers to record events and detect anomalies without altering core transactional logic.
+\end{itemize}
+
+\newpage
+\section{Interpreter and Mediator Integration}
+
+Software architectures rarely utilize design patterns in isolation. The Observer pattern combines with the Interpreter and Mediator patterns to establish decoupled, event-driven, and reactive application pipelines.
+
+\subsection{Combining Observer with the Interpreter Pattern}
+In standard evaluation pipelines, expression trees are evaluated on-demand when explicitly triggered by a caller. Integrating the Observer pattern transforms this model into a push-based reactive rule engine.
+
+In this architecture, the evaluation symbol table (\texttt{Context}) functions as an observable Subject. The root nodes of domain-specific Abstract Syntax Trees (ASTs) register as observers listening for updates to specific variable identifiers. Whenever a variable's value changes within the Context, the Context notifies all dependent expression trees. The trees re-evaluate their logical predicates automatically and trigger downstream actions without requiring polling loops or manual re-invocation.
+
+\subsection{Combining Observer with the Mediator Pattern}
+In complex systems with multiple interacting components, direct peer-to-peer subscriptions can lead to intricate point-to-point connections. Combining the Observer and Mediator patterns resolves this issue by introducing a centralized Event Aggregator or Event Bus.
+
+Under this model, components do not subscribe directly to each other. Instead, they register as observers with a central \texttt{EventMediator}. When an event occurs, the publishing component sends the event details to the Mediator. The Mediator inspects the event payload, applies routing or filtering policies, and dispatches notifications to the relevant subscriber components. This approach simplifies the communication topology from an $O(N^2)$ mesh to an $O(N)$ star topology while maintaining loose coupling.
+
+\section{Conclusion}
+The Observer Design Pattern provides a structured way to decouple state-holding subjects from dependent notification and logging modules. By using an abstract interface and maintaining dynamic subscriber collections, the pattern supports the Open-Closed and Single Responsibility Principles.
+
+In C++17, utilizing smart pointers (\texttt{std::shared\_ptr} and \texttt{std::weak\_ptr}) ensures safe object lifetime management and prevents dangling references. When integrated with the Interpreter and Mediator patterns, the Observer pattern supports reactive rule engines and centralized event-driven architectures.
+
+\newpage
+
+\section*{References}
+\addcontentsline{toc}{section}{References}
 \begin{itemize}
     \item Gamma, E., Helm, R., Johnson, R., \& Vlissides, J. (1994). \textit{Design Patterns: Elements of Reusable Object-Oriented Software}. Addison-Wesley.
-    \item Refactoring.Guru. \textit{Design Patterns: Observer}. \url{https://refactoring.guru/design-patterns/observer}
+    \item Meyers, S. (2014). \textit{Effective Modern C++: 42 Specific Ways to Improve Your Use of C++11 and C++14}. O'Reilly Media.
+    \item Fowler, M. (2002). \textit{Patterns of Enterprise Application Architecture}. Addison-Wesley.
+    \item Refactoring.Guru. \textit{Design Patterns: Observer Pattern}. \url{https://refactoring.guru/design-patterns/observer}
 \end{itemize}
 
 \end{document}

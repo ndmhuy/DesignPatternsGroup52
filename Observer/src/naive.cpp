@@ -1,72 +1,125 @@
+#ifndef NAIVE_CPP
+#define NAIVE_CPP
+
 #include <iostream>
 #include <string>
+#include <vector>
 
-// Concrete peripheral systems (tightly coupled)
-class UI {
+namespace naive {
+
+// Concrete notification and processing services
+class UIUpdateService {
 public:
-    void update(double balance) {
-        std::cout << "[UI] Balance display updated to $" << balance << "\n";
+    void updateUI(double amount, double balance) {
+        std::cout << "[UI] Updated. Transaction: " << amount << ", New Balance: " << balance << std::endl;
     }
 };
 
-class EmailSystem {
+class EmailService {
 public:
-    void sendEmail(double amount) {
-        std::cout << "[Email] Alert sent: A deposit of $" << amount << " was made.\n";
+    void sendEmail(const std::string& accountNumber, double amount) {
+        std::cout << "[Email] Sent receipt for account " << accountNumber << ". Amount: " << amount << std::endl;
     }
 };
 
-class Logger {
+class LoggerService {
 public:
-    void log(double amount, double balance) {
-        std::cout << "[Logger] Transaction logged: Deposit of $" << amount << ", new balance: $" << balance << "\n";
+    void logTransaction(const std::string& accountNumber, double amount) {
+        std::cout << "[Logger] Logged transaction for account " << accountNumber << ". Amount: " << amount << std::endl;
     }
 };
 
-class FraudDetector {
+class FraudDetectionService {
 public:
-    void scan(double amount) {
-        std::cout << "[Fraud AI] Scan complete: Deposit of $" << amount << " is marked OK.\n";
+    void detectFraud(const std::string& accountNumber, double amount) {
+        std::cout << "[Fraud AI] Checked transaction for account " << accountNumber << ". Amount: " << amount << ". Status: Safe." << std::endl;
     }
 };
 
-class MobileApp {
+class MobileAppService {
 public:
     void pushNotification(double amount) {
-        std::cout << "[Mobile App] Push: Account credited with $" << amount << "\n";
+        std::cout << "[Mobile App] Push notification sent. Activity: " << amount << std::endl;
     }
 };
 
-class Analytics {
+class AnalyticsService {
 public:
-    void trackActivity(const std::string& type, double amount) {
-        std::cout << "[Analytics] Metric recorded: Event [" << type << "] for $" << amount << "\n";
+    void trackEvent(const std::string& eventType, double amount) {
+        std::cout << "[Analytics] Tracked event '" << eventType << "' with amount " << amount << std::endl;
     }
 };
 
-// Tightly-coupled Naive Bank Account
-class NaiveBankAccount {
+// BankAccount class with direct, hardcoded dependencies
+class BankAccount {
 private:
     double balance;
-    UI ui;
-    EmailSystem email;
-    Logger logger;
-    FraudDetector fraudDetector;
-    MobileApp mobileApp;
-    Analytics analytics;
+    std::string accountNumber;
+    
+    // Direct dependencies on concrete services
+    UIUpdateService* uiService;
+    EmailService* emailService;
+    LoggerService* loggerService;
+    FraudDetectionService* fraudService;
+    MobileAppService* mobileService;
+    AnalyticsService* analyticsService;
 
 public:
-    NaiveBankAccount(double initialBalance = 0.0) : balance(initialBalance) {}
+    // Constructor implementing initialization with all concrete dependencies passed as parameters
+    BankAccount(std::string accNum,
+                UIUpdateService* ui,
+                EmailService* email,
+                LoggerService* logger,
+                FraudDetectionService* fraud,
+                MobileAppService* mobile,
+                AnalyticsService* analytics) 
+        : balance(0.0), accountNumber(accNum),
+          uiService(ui),
+          emailService(email),
+          loggerService(logger),
+          fraudService(fraud),
+          mobileService(mobile),
+          analyticsService(analytics) {}
 
+    // Destructor (no ownership of passed service pointers)
+    ~BankAccount() = default;
+
+    // deposit method notifying each service directly
     void deposit(double amount) {
         balance += amount;
         
-        // Direct, hardcoded method calls to concrete observer classes
-        ui.update(balance);
-        email.sendEmail(amount);
-        logger.log(amount, balance);
-        fraudDetector.scan(amount);
-        mobileApp.pushNotification(amount);
-        analytics.trackActivity("Deposit", amount);
+        // Directly invoke methods on each hardcoded concrete service dependency
+        uiService->updateUI(amount, balance);
+        emailService->sendEmail(accountNumber, amount);
+        loggerService->logTransaction(accountNumber, amount);
+        fraudService->detectFraud(accountNumber, amount);
+        mobileService->pushNotification(amount);
+        analyticsService->trackEvent("deposit", amount);
     }
+
+    double getBalance() const { return balance; }
+    std::string getAccountNumber() const { return accountNumber; }
 };
+
+void naiveTest() {
+    // Create service variables on the stack
+    UIUpdateService ui;
+    EmailService email;
+    LoggerService logger;
+    FraudDetectionService fraud;
+    MobileAppService mobile;
+    AnalyticsService analytics;
+
+    // Create BankAccount with multiple parameters
+    BankAccount account("123456789", &ui, &email, &logger, &fraud, &mobile, &analytics);
+
+    // Call deposit to demonstrate coupling execution
+    std::cout << "--- Naive Deposit Test ---" << std::endl;
+    account.deposit(500.0);
+    std::cout << std::endl;
+    account.deposit(200.0);
+}
+
+} // namespace naive
+
+#endif
