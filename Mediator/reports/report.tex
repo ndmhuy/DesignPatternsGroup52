@@ -67,7 +67,7 @@ In modern aviation and distributed software systems, coordinating multiple indep
 All aircraft must share a finite, exclusive physical resource: the active runway (\texttt{Runway 07L}). At most one aircraft may safely occupy the runway at any given instant for landing or takeoff.
 
 \subsection{\texorpdfstring{The Communication Bottleneck: $O(N^2)$ Peer-to-Peer Mesh}{The Communication Bottleneck: O(N^2) Peer-to-Peer Mesh}}
-If aircraft coordinate landing authorization directly with one another without a central coordinator (a peer-to-peer mesh architecture):
+If aircraft coordinate landing authorization directly with one another without a central coordinator (a peer-to-peer mesh architecture, illustrated in Figure~\ref{fig:p2p_mesh}):
 \begin{enumerate}
     \item \textbf{Complete Graph Complexity:} For $N$ active aircraft in the airspace, every aircraft must maintain direct radio and data links to all $N-1$ other aircraft. The total number of communication channels in the network forms a complete graph $K_N$ with:
     \begin{equation}
@@ -246,7 +246,7 @@ Consider 3 aircraft (\texttt{VN123}, \texttt{AF456}, \texttt{BA789}) entering th
 \newpage
 \section{Analysis of Naive Solution Drawbacks}
 
-Even when implemented using standard object-oriented idioms (proper enums, RAII destructors, encapsulation), the decentralized peer-to-peer approach suffers from fundamental architectural flaws:
+Even when implemented using standard object-oriented idioms (proper enums, RAII destructors, encapsulation), the decentralized peer-to-peer approach suffers from fundamental architectural flaws, detailed in Table~\ref{tab:naive_drawbacks}:
 
 \begin{table}[htbp]
 \centering
@@ -279,7 +279,7 @@ According to the Gang of Four (GoF), the \textbf{Mediator Pattern} is defined as
 \textit{"Define an object that encapsulates how a set of objects interact. Mediator promotes loose coupling by keeping objects from referring to each other explicitly, and it lets you vary their interaction independently."}
 \end{quote}
 
-The pattern replaces a chaotic, many-to-many communication mesh with a clean, one-to-many \textbf{Hub-and-Spoke (Star Topology)}.
+The pattern replaces a chaotic, many-to-many communication mesh with a clean, one-to-many \textbf{Hub-and-Spoke (Star Topology)}, as illustrated in Figure~\ref{fig:star_topology}.
 
 \begin{figure}[htbp]
 \centering
@@ -319,7 +319,7 @@ The pattern replaces a chaotic, many-to-many communication mesh with a clean, on
 \section{UML Class Diagrams}
 
 \subsection{General GoF Mediator Pattern Structure}
-The generic Mediator structure decouples colleague objects from one another by funneling all interaction logic through an abstract mediator interface.
+As depicted in Figure~\ref{fig:general_mediator_uml}, the generic Mediator structure decouples colleague objects from one another by funneling all interaction logic through an abstract mediator interface.
 
 \begin{figure}[htbp]
 \centering
@@ -360,7 +360,7 @@ The generic Mediator structure decouples colleague objects from one another by f
 \end{figure}
 
 \subsection{Airport Air Traffic Control Mediator Class Hierarchy}
-For our ATC runway coordination engine, \texttt{ATCTower} serves as the central mediator managing flight registrations, holding queues, and landing clearances across specialized flight colleagues.
+Figure~\ref{fig:atc_mediator_uml} illustrates the airport runway coordination architecture, where \texttt{ATCTower} serves as the central mediator managing flight registrations, holding queues, and landing clearances across specialized flight colleagues.
 
 \begin{figure}[htbp]
 \centering

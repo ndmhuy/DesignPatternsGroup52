@@ -122,4 +122,10 @@ void naiveTest() {
 
 } // namespace naive
 
+void runNaiveDemo() {
+    std::cout << "\n=== RUNNING OBSERVER NAIVE DEMO (Without Pattern) ===\n";
+    naive::naiveTest();
+    std::cout << "=== OBSERVER NAIVE DEMO COMPLETED ===\n";
+}
+
 #endif

@@ -153,7 +153,7 @@ private:
 \end{lstlisting}
 
 \subsection{Step-by-Step Execution of the Naive Evaluator}
-To illustrate how the naive solution operates, consider evaluating the string \texttt{"A OR B AND C"} with context $A=\text{true}, B=\text{false}, C=\text{true}$:
+To illustrate how the naive solution operates, consider evaluating the string \texttt{"A OR B AND C"} with context $A=\text{true}, B=\text{false}, C=\text{false}$:
 \begin{enumerate}
     \item \textbf{Tokenization (String Splitting):} The evaluator parses the raw string by whitespace into a linear token vector:
     \begin{equation*}
@@ -166,19 +166,19 @@ To illustrate how the naive solution operates, consider evaluating the string \t
         \begin{equation*}
             \text{\texttt{result}} = \text{\texttt{result}} \lor B = \text{true} \lor \text{false} = \mathbf{true}
         \end{equation*}
-        \item \textit{Step 3b:} Reads operator \texttt{"AND"} and operand \texttt{"C"} ($C = \text{true}$). Updates:
+        \item \textit{Step 3b:} Reads operator \texttt{"AND"} and operand \texttt{"C"} ($C = \text{false}$). Updates:
         \begin{equation*}
-            \text{\texttt{result}} = \text{\texttt{result}} \land C = \text{true} \land \text{true} = \mathbf{true}
+            \text{\texttt{result}} = \text{\texttt{result}} \land C = \text{true} \land \text{false} = \mathbf{false}
         \end{equation*}
     \end{itemize}
 \end{enumerate}
 
-\textbf{Critical Flaw Demonstrated:} The naive evaluator computes $(A \lor B) \land C = (\text{true} \lor \text{false}) \land \text{true} = \text{true}$. If the input were \texttt{"false OR true AND false"}, the mathematically correct precedence $A \lor (B \land C)$ yields $\text{false} \lor (\text{true} \land \text{false}) = \mathbf{false}$, but the naive left-to-right evaluator incorrectly outputs $(\text{false} \lor \text{true}) \land \text{false} = \mathbf{false}$ (or in other expressions, completely corrupts truth values due to lack of precedence and parenthesis support).
+\textbf{Critical Flaw Demonstrated:} The naive evaluator evaluates strictly left-to-right as $(A \lor B) \land C = (\text{true} \lor \text{false}) \land \text{false} = \mathbf{false}$. However, according to standard mathematical operator precedence ($\text{AND} > \text{OR}$), the expression must be evaluated as $A \lor (B \land C) = \text{true} \lor (\text{false} \land \text{false}) = \mathbf{true}$. The naive evaluation thus produces an incorrect truth value ($\mathbf{false}$ instead of $\mathbf{true}$) due to its inability to enforce operator precedence and grammatical hierarchy.
 
 \newpage
 \section{Analysis of Naive Solution Drawbacks}
 
-The naive string-scanning and procedural dispatch approach presents several architectural, correctness, and performance limitations:
+The naive string-scanning and procedural dispatch approach presents several architectural, correctness, and performance limitations, summarized in Table~\ref{tab:interpreter_drawbacks}:
 
 \begin{table}[h]
 \centering
@@ -201,6 +201,7 @@ The naive string-scanning and procedural dispatch approach presents several arch
 \end{tabular}
 }
 \caption{Design and Performance Limitations of the Naive Solution}
+\label{tab:interpreter_drawbacks}
 \end{table}
 
 \section{Introduction to the Interpreter Design Pattern}
@@ -230,7 +231,7 @@ The pattern addresses the problem by representing each grammar rule as a class. 
 \section{UML Class Diagrams}
 
 \subsection{General GoF Interpreter Pattern Structure}
-The Interpreter pattern defines a polymorphic hierarchy where non-terminal composite nodes hold references to abstract expressions, while terminal nodes evaluate directly against the context.
+As shown in Figure~\ref{fig:general_uml_structure}, the Interpreter pattern defines a polymorphic hierarchy where non-terminal composite nodes hold references to abstract expressions, while terminal nodes evaluate directly against the context.
 
 \begin{figure}[htbp]
 \centering
@@ -272,7 +273,7 @@ The Interpreter pattern defines a polymorphic hierarchy where non-terminal compo
 \end{figure}
 
 \subsection{Boolean Logic Evaluator Class Hierarchy}
-For our Boolean expression engine, \texttt{BooleanExpression} acts as the abstract component interface with concrete terminals (\texttt{VariableExpression}, \texttt{ConstantExpression}) and non-terminals owning child expressions via \texttt{std::unique\_ptr}.
+Figure~\ref{fig:concrete_uml} shows the class hierarchy of our Boolean expression engine. \texttt{BooleanExpression} acts as the abstract component interface with concrete terminals (\texttt{VariableExpression}, \texttt{ConstantExpression}) and non-terminals owning child expressions via \texttt{std::unique\_ptr}.
 
 \begin{figure}[htbp]
 \centering

@@ -76,16 +76,16 @@ void runNaiveDemo() {
     naive::Context ctx;
     ctx.assign("A", true);
     ctx.assign("B", false);
-    ctx.assign("C", true);
+    ctx.assign("C", false);
 
-    std::cout << "Context: A=true, B=false, C=true\n";
+    std::cout << "Context: A=true, B=false, C=false\n";
     std::string expr1 = "A AND B";
     std::cout << "Evaluating '" << expr1 << "': " 
               << (naive::NaiveLogicEvaluator::evaluate(expr1, ctx) ? "true" : "false") << "\n";
 
-    std::string expr2 = "A OR B AND C"; // Naive parses left-to-right: (A OR B) AND C
+    std::string expr2 = "A OR B AND C"; // Naive parses left-to-right: (A OR B) AND C -> false
     std::cout << "Evaluating '" << expr2 << "' (Naive left-to-right evaluation): " 
               << (naive::NaiveLogicEvaluator::evaluate(expr2, ctx) ? "true" : "false") << "\n";
-    std::cout << "Notice: Naive evaluator lacks true grammar structure, AST nodes, and flexible operator hierarchy.\n";
+    std::cout << "Notice: Mathematical precedence (A OR (B AND C)) evaluates to 'true', but naive left-to-right outputs 'false'.\n";
     std::cout << "=== INTERPRETER NAIVE DEMO COMPLETED ===\n";
 }

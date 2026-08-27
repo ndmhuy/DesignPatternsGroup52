@@ -180,7 +180,7 @@ To illustrate the behavior of the naive implementation, consider depositing $\$5
 
 \section{Analysis of Naive Solution Drawbacks}
 
-The naive approach presents several design limitations:
+The naive approach presents several design limitations, summarized in Table~\ref{tab:observer_drawbacks}:
 
 \begin{table}[h]
 \centering
@@ -203,6 +203,7 @@ The naive approach presents several design limitations:
 \end{tabular}
 }
 \caption{Design Issues in the Naive Implementation}
+\label{tab:observer_drawbacks}
 \end{table}
 
 \section{Introduction to the Observer Design Pattern}
@@ -239,7 +240,7 @@ virtual void onTransaction(const std::string& type, double amount, double balanc
 \section{UML Class Diagrams}
 
 \subsection{General GoF Observer Pattern Structure}
-The general Observer pattern structure connects the \texttt{Subject} to the abstract \texttt{Observer} interface rather than concrete subscriber classes.
+As illustrated in Figure~\ref{fig:general_observer_uml}, the general Observer pattern structure connects the \texttt{Subject} to the abstract \texttt{Observer} interface rather than concrete subscriber classes.
 
 \begin{figure}[htbp]
 \centering
@@ -266,7 +267,7 @@ The general Observer pattern structure connects the \texttt{Subject} to the abst
 \end{figure}
 
 \subsection{Bank Account Notification Class Diagram}
-In the bank account system, \texttt{BankAccount} acts as the Subject, storing a collection of \texttt{std::shared\_ptr<AccountObserver>} instances. All 6 concrete notification classes implement the \texttt{AccountObserver} interface.
+Figure~\ref{fig:concrete_bank_uml} depicts the concrete class hierarchy for the bank account notification system. In this design, \texttt{BankAccount} acts as the Subject, storing a collection of \texttt{std::shared\_ptr<AccountObserver>} instances. All 6 concrete notification classes implement the \texttt{AccountObserver} interface.
 
 \begin{figure}[htbp]
 \centering
