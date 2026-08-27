@@ -52,7 +52,7 @@ Reports must be structured using standard LaTeX article class. Ensure that each 
    - `\section{Pattern-Based Implementation}`: Code snippets of the refactored code.
    - `\section{Pros and Cons}`: Evaluation of trade-offs.
    - `\section{Modern Web & Mobile Applications}`: Real-world usages.
-   - `\section{Interactive Quiz}`: 5-8 multiple-choice questions.
+   - *(Note: Interactive Quiz is included exclusively in the presentation PPTX / slide decks, and is omitted from the LaTeX reports)*.
 3. **Packages to Include:**
    - `listings` or `minted` for syntax highlighting of C++ code.
    - `graphicx` for importing class diagrams.
