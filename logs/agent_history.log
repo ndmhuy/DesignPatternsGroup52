@@ -460,3 +460,32 @@ Git Fingerprint: cf8cb2a -> pending commit
 
 
 
+[2026-08-27 15:58:15] Branch: main
+Prompt: Create AI Usage Declaration, Changes.md, and rename the Evaluation template for final submission.
+Files Modified:
+  - Changes.md
+  - AI_Usage_Declaration.md
+  - 2021-2022-HK1-Group52-Project_Evaluation.xlsx
+  - logs/agent_history.log
+Summary of Changes:
+  - Created Changes.md to track progress since the last presentation.
+  - Created AI_Usage_Declaration.md detailing AI tooling and pointing to the chat log.
+  - Renamed the Project Evaluation template to match Group 52.
+Git Fingerprint: fbb6c20 -> 4b74200
+---
+[2026-08-27 16:07:00] Branch: main
+Prompt: Fix overlapping UML diagrams (Figures 3 and 4), rename xlsx to 2025-2026-HK3, rebuild submission folder.
+Files Modified:
+  - Mediator/reports/report.tex
+  - Mediator/reports/report.pdf
+  - 2025-2026-HK3-Group52-Project_Evaluation.xlsx (renamed from 2021-2022-HK1)
+  - submission/ (rebuilt)
+  - logs/agent_history.log
+Summary of Changes:
+  - Rewrote Figure 3 (General GoF Mediator UML) using absolute positioning to separate ConcreteMediator, ConcreteColleague1, and ConcreteColleague2 into distinct non-overlapping regions.
+  - Rewrote Figure 4 (ATC Mediator Class Hierarchy) with absolute positioning, separate inheritance anchor points, and wider spacing between ATCTower and the Flight colleague column.
+  - Renamed evaluation xlsx from 2021-2022-HK1 to 2025-2026-HK3.
+  - Recompiled Mediator report PDF (21 pages, 0 overfull warnings).
+  - Updated submission folder with corrected files.
+Git Fingerprint: 4b74200 -> pending commit
+---
