@@ -1,0 +1,26 @@
+--- Mediator/reports/report.tex
++++ Mediator/reports/report.tex
+@@ -389,14 +389,16 @@
+ % Association: Flight uses IATCMediator
+ \draw[->, thick] (flightBase.west) -- (iMediator.east) node[midway, above, font=\scriptsize] {uses};
+ 
+-% Association: ATCTower manages Flight (routes through empty space x=3.2)
+-\draw[->, thick] (atcTower.east) -- ++(0.6,0) node[above right, font=\scriptsize] {manages 0..*} |- ([yshift=-5mm]flightBase.west);
++% Association: ATCTower manages Flight (routed explicitly)
++\draw[->, thick] (atcTower.east) -- ++(0.8,0) coordinate (M1) 
++    -- (M1 |- {[yshift=-5mm]flightBase.west}) node[midway, left, font=\scriptsize] {manages 0..*} 
++    -- ([yshift=-5mm]flightBase.west);
+ 
+-% Colleague inheritance: all three inherit from Flight
++% Colleague inheritance: all three inherit from Flight, routing neatly to bottom
+ \draw[->, thick] (commFlight.north) -- (flightBase.south);
+-% Route CargoFlight inheritance through x=5.4
+-\draw[->, thick] (cargoFlight.west) -- ++(-1.0,0) |- ([xshift=-1.5cm]flightBase.south);
+-% Route EmergencyFlight inheritance through x=4.4
+-\draw[->, thick] (emergFlight.west) -- ++(-2.0,0) |- ([xshift=-2.2cm]flightBase.south);
++% Route CargoFlight
++\draw[->, thick] (cargoFlight.west) -- ++(-1.2,0) |- ([xshift=-5mm, yshift=-1cm]flightBase.south) -- ([xshift=-5mm]flightBase.south);
++% Route EmergencyFlight
++\draw[->, thick] (emergFlight.west) -- ++(-2.0,0) |- ([xshift=-10mm, yshift=-1.5cm]flightBase.south) -- ([xshift=-10mm]flightBase.south);
+ \end{tikzpicture}
+ }

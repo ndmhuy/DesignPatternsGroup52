@@ -397,12 +397,12 @@ For our ATC runway coordination engine, \texttt{ATCTower} serves as the central 
     -- (M1 |- {[yshift=-5mm]flightBase.west}) node[midway, left, font=\scriptsize] {manages 0..*} 
     -- ([yshift=-5mm]flightBase.west);
 
-% Colleague inheritance: Unified tree via a bus at y=-2.0
+% Colleague inheritance: all three inherit from Flight, routing neatly to bottom
 \draw[->, thick] (commFlight.north) -- (flightBase.south);
-% Route CargoFlight into the trunk
-\draw[thick] (cargoFlight.west) -- ++(-0.6,0) coordinate (C1) -- (C1 |- 0,-2.0) -- (9,-2.0);
-% Route EmergencyFlight into the trunk
-\draw[thick] (emergFlight.west) -- ++(-1.0,0) coordinate (E1) -- (E1 |- 0,-2.0) -- (9,-2.0);
+% Route CargoFlight
+\draw[->, thick] (cargoFlight.west) -- ++(-1.2,0) |- ([xshift=-5mm, yshift=-1cm]flightBase.south) -- ([xshift=-5mm]flightBase.south);
+% Route EmergencyFlight
+\draw[->, thick] (emergFlight.west) -- ++(-2.0,0) |- ([xshift=-10mm, yshift=-1.5cm]flightBase.south) -- ([xshift=-10mm]flightBase.south);
 \end{tikzpicture}
 }
 \caption{Airport Air Traffic Control Mediator Class Hierarchy}

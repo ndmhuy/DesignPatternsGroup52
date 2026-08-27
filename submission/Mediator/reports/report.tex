@@ -392,15 +392,17 @@ For our ATC runway coordination engine, \texttt{ATCTower} serves as the central 
 % Association: Flight uses IATCMediator
 \draw[->, thick] (flightBase.west) -- (iMediator.east) node[midway, above, font=\scriptsize] {uses};
 
-% Association: ATCTower manages Flight (routes through empty space x=3.2)
-\draw[->, thick] (atcTower.east) -- ++(0.6,0) node[above right, font=\scriptsize] {manages 0..*} |- ([yshift=-5mm]flightBase.west);
+% Association: ATCTower manages Flight (routed explicitly)
+\draw[->, thick] (atcTower.east) -- ++(0.8,0) coordinate (M1) 
+    -- (M1 |- {[yshift=-5mm]flightBase.west}) node[midway, left, font=\scriptsize] {manages 0..*} 
+    -- ([yshift=-5mm]flightBase.west);
 
-% Colleague inheritance: all three inherit from Flight
+% Colleague inheritance: Unified tree via a bus at y=-2.0
 \draw[->, thick] (commFlight.north) -- (flightBase.south);
-% Route CargoFlight inheritance through x=5.4
-\draw[->, thick] (cargoFlight.west) -- ++(-1.0,0) |- ([xshift=-1.5cm]flightBase.south);
-% Route EmergencyFlight inheritance through x=4.4
-\draw[->, thick] (emergFlight.west) -- ++(-2.0,0) |- ([xshift=-2.2cm]flightBase.south);
+% Route CargoFlight into the trunk
+\draw[thick] (cargoFlight.west) -- ++(-0.6,0) coordinate (C1) -- (C1 |- 0,-2.0) -- (9,-2.0);
+% Route EmergencyFlight into the trunk
+\draw[thick] (emergFlight.west) -- ++(-1.0,0) coordinate (E1) -- (E1 |- 0,-2.0) -- (9,-2.0);
 \end{tikzpicture}
 }
 \caption{Airport Air Traffic Control Mediator Class Hierarchy}
